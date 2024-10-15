@@ -1,0 +1,16 @@
+<view class="container">
+    <view class="current-player">
+        <text>当前玩家：{{players[currentPlayerIndex].name}}</text>
+    </view>
+    <button class="roll-button" bindtap="rollDice">掷骰子</button>
+    <view class="dice-result">
+        <text>骰子结果：{{diceResult}}</text>
+    </view>
+    <view class="players-info">
+        <block wx:for="{{players}}" wx:key="id">
+            <view class="player-card">
+                <text>{{item.name}} - 位置：{{item.position}} - 金钱：¥{{item.money}} - 道具：{{item.items}}</text>
+            </view>
+        </block>
+    </view>
+</view>

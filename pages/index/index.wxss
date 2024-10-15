@@ -1,0 +1,43 @@
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+  box-sizing: border-box;
+}
+
+.current-player {
+  margin-bottom: 20rpx;
+  font-weight: bold;
+  font-size: 32rpx;
+  color: #333;
+}
+
+.roll-button {
+  margin: 20rpx 0;
+  padding: 10rpx;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 8rpx;
+}
+
+.dice-result {
+  margin-bottom: 20rpx;
+  font-size: 28rpx;
+  color: #444;
+}
+
+.players-info {
+  margin-top: 20rpx;
+}
+
+.player-card {
+  padding: 10rpx;
+  margin-bottom: 10rpx;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8rpx;
+  background-color: #f9f9f9;
+}

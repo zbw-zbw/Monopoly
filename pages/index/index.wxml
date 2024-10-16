@@ -1,16 +1,25 @@
 <view class="container">
-    <view class="current-player">
-        <text>当前玩家：{{players[currentPlayerIndex].name}}</text>
+  <view class="players-info">
+    <block wx:for="{{players}}" wx:key="id">
+      <view class="player-info" style="{{item.id === currentPlayerIndex + 1 ? 'padding: 6px 0; color:#fff; background-color: yellowgreen;' : ''}}">
+        <text>{{item.name}} - 资产：¥{{item.money}} - 道具：{{item.items.length > 0 ? item.items : '无'}}</text>
+      </view>
+    </block>
+  </view>
+  <button class="roll-button" bindtap="rollDice">掷骰子</button>
+  <view class="dice-container">
+    <view class="dice" animation="{{diceAnimation}}">
+      <text>{{diceResult}}</text>
     </view>
-    <button class="roll-button" bindtap="rollDice">掷骰子</button>
-    <view class="dice-result">
-        <text>骰子结果：{{diceResult}}</text>
-    </view>
-    <view class="players-info">
-        <block wx:for="{{players}}" wx:key="id">
-            <view class="player-card">
-                <text>{{item.name}} - 位置：{{item.position}} - 金钱：¥{{item.money}} - 道具：{{item.items}}</text>
-            </view>
-        </block>
-    </view>
+  </view>
+  <view class="game-board">
+    <block wx:for="{{board}}" wx:key="index">
+      <view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};"></view>
+    </block>
+    <block wx:for="{{players}}" wx:key="id">
+      <view class="player-marker" style="left: {{board[item.position].x}}px; top: {{board[item.position].y}}px; background-color: {{item.bgColor}};" animation="{{playerAnimation}}">
+        {{item.name}}
+      </view>
+    </block>
+  </view>
 </view>

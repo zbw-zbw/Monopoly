@@ -1,43 +1,72 @@
 .container {
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 200rpx 0;
-  box-sizing: border-box;
-}
-
-.current-player {
-  margin-bottom: 20rpx;
-  font-weight: bold;
-  font-size: 32rpx;
-  color: #333;
-}
-
-.roll-button {
-  margin: 20rpx 0;
-  padding: 10rpx;
-  background-color: #4caf50;
-  color: white;
-  border-radius: 8rpx;
-}
-
-.dice-result {
-  margin-bottom: 20rpx;
-  font-size: 28rpx;
-  color: #444;
+  padding-top: 200rpx;
+  overflow: auto;
 }
 
 .players-info {
-  margin-top: 20rpx;
+  width: 100%;
+  padding: 20px;
+  background-color: #f2f2f2;
 }
 
-.player-card {
-  padding: 10rpx;
-  margin-bottom: 10rpx;
-  font-size: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8rpx;
-  background-color: #f9f9f9;
+.player-info {
+  margin-bottom: 6px;
 }
+
+.dice-container {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px;
+  border: 1px solid #000;
+  border-radius: 10px;
+}
+
+.dice {
+  font-size: 24px;
+}
+
+.roll-button {
+  margin: 10px;
+  padding: 10px;
+  background-color: #007aff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.game-board {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.tile {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ccc;
+}
+
+.player-marker {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  transition: all 0.5s ease;
+}
+

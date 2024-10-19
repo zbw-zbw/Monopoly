@@ -1,59 +1,81 @@
 Page({
   data: {
+    canRollDice: true,
     diceResult: 0,
+    diceImg: "/assets/1.png",
     diceAnimation: {},
-    currentPlayerIndex: 2,
+    currentPlayerIndex: 0,
+    board: [],
     players: [
       {
         id: 1,
         name: "宝文",
-        money: 1500,
+        avatar: "/assets/avatar-wen.jpg",
+        money: 500,
+        position: 0,
+        bgColor: "tomato",
+        items: [],
+        doubleCardActive: false,
+        shieldActive: false,
+        isBankrupt: false,
+      },
+      {
+        id: 2,
+        name: "钦贵",
+        avatar: "/assets/avatar-gui.jpg",
+        money: 500,
         position: 0,
         bgColor: "skyblue",
         items: [],
         doubleCardActive: false,
         shieldActive: false,
-      },
-      {
-        id: 2,
-        name: "钦贵",
-        money: 1500,
-        position: 0,
-        bgColor: "yellowgreen",
-        items: [],
-        doubleCardActive: false,
-        shieldActive: false,
+        isBankrupt: false,
       },
       {
         id: 3,
         name: "黄灿",
-        money: 1500,
+        avatar: "/assets/avatar-can.jpg",
+        money: 500,
         position: 0,
-        bgColor: "saddlebrown",
+        bgColor: "orange",
         items: [],
         doubleCardActive: false,
         shieldActive: false,
+        isBankrupt: false,
       },
     ],
-    board: [],
     chanceEvents: [
       {
         type: "reward",
-        amount: 100,
-        message: "你找到了隐藏的宝藏，获得了 ¥100！",
+        amount: 1000,
+        message: "你找到了隐藏的宝藏，获得了 ¥1000！",
       },
-      { type: "penalty", amount: 50, message: "你被罚款了 ¥50！" },
-      { type: "move", steps: 3, message: "你获得了幸运步数，前进3格！" },
-      { type: "move", steps: -2, message: "你不小心摔倒了，后退2格！" },
+      { type: "penalty", amount: 500, message: "你被罚款了 ¥500！" },
+      // { type: "move", steps: 3, message: "你获得了幸运步数，前进3格！" },
+      // { type: "move", steps: -2, message: "你不小心摔倒了，后退2格！" },
       { type: "teleport", destination: 0, message: "你被传送回了起点！" },
       { type: "item", item: "双倍卡", message: "你获得了一个双倍卡！" },
       { type: "item", item: "控制骰子", message: "你获得了一个控制骰子！" },
       { type: "item", item: "防护罩", message: "你获得了一个防护罩！" },
     ],
     trapEvents: [
-      { type: "penalty", amount: 50, message: "你掉进了陷阱，罚款 ¥50！" },
+      { type: "penalty", amount: 500, message: "你掉进了陷阱，罚款 ¥500！" },
       { type: "skip", message: "你掉进了陷阱，失去一次行动机会！" },
       { type: "teleport", destination: 0, message: "你被传送回了起点！" },
+    ],
+    items: [
+      {
+        name: "双倍卡",
+        price: 300,
+      },
+      {
+        name: "防护罩",
+        price: 400,
+      },
+      {
+        name: "控制骰子",
+        price: 500,
+      },
     ],
   },
 
@@ -61,12 +83,42 @@ Page({
     this.initBoard();
   },
 
-  // 初始化地图格子布局，形成一条完整路线
+  // 登录接口
+  login() {
+    wx.login({
+      success: (res) => {
+        if (res.code) {
+          console.log("登录成功，code:", res.code);
+        } else {
+          console.log("登录失败！" + res.errMsg);
+        }
+      },
+      fail: (err) => {
+        console.log("wx.login 失败:", err);
+      },
+    });
+  },
+
+  // 获取用户信息
+  getUserProfile() {
+    wx.getUserProfile({
+      desc: "用于完善会员资料",
+      success: (res) => {
+        const userInfo = res.userInfo;
+        console.log("用户信息:", userInfo);
+      },
+      fail: (err) => {
+        console.log("获取用户信息失败:", err);
+      },
+    });
+  },
+
+  // 初始化地图
   initBoard() {
     const board = [];
     const totalTiles = 40;
 
-    for (let i = 0; i < totalTiles - 1; i++) {
+    for (let i = 0; i < totalTiles; i++) {
       let tile = {
         x: 0,
         y: 0,
@@ -75,26 +127,31 @@ Page({
         bgColor: "#ffffff",
       };
 
-      // 使用 switch 优化格子类型的设置
       switch (true) {
         case i === 0:
+          tile.name = "起点";
           tile.type = "start"; // 起点
           tile.bgColor = "#ff0757";
+          tile.price = 1000;
           break;
         case i % 6 === 0:
+          tile.name = "商店";
           tile.type = "shop"; // 商店
           tile.bgColor = "#ec561d";
           break;
         case i % 7 === 0:
+          tile.name = "机会";
           tile.type = "chance"; // 机会卡
           tile.bgColor = "#f70ccf";
           break;
         case i % 8 === 0:
+          tile.name = "陷阱";
           tile.type = "trap"; // 陷阱
           tile.bgColor = "#1af70c";
           break;
         default:
-          tile.price = (i + 1) * 10; // 地产
+          // TODO 动态设置价格
+          tile.price = 500; // 空地
           break;
       }
 
@@ -114,6 +171,11 @@ Page({
         tile.y = (9 - (i - 30)) * gridSize;
       }
 
+      // 避免在拐角位置渲染重复的格子
+      if (i > 0 && ((i % 10 === 0 && i < 40) || (i % 10 === 9 && i >= 30))) {
+        continue; // 跳过重复的拐角格子
+      }
+
       board.push(tile);
     }
 
@@ -122,23 +184,27 @@ Page({
 
   // 摇骰子
   rollDice() {
-    const diceResult = Math.floor(Math.random() * 6) + 1;
-
-    // 定义骰子动画
-    const animation = wx.createAnimation({
-      duration: 500,
-      timingFunction: "ease",
-    });
-
-    animation.rotate(360).step().scale(1.5).step().scale(1).step();
+    const { canRollDice, currentPlayerIndex, players } = this.data;
+    if (!canRollDice) return;
 
     this.setData({
-      diceResult,
-      diceAnimation: animation.export(),
+      canRollDice: false,
+      diceImg: "/assets/x.gif",
     });
 
-    // 继续处理玩家移动逻辑
-    this.movePlayer(diceResult);
+    const rollDiceTimer = setTimeout(() => {
+      clearTimeout(rollDiceTimer);
+      const diceResult = Math.floor(Math.random() * 6) + 1;
+      const diceImg = `/assets/${diceResult}.png`;
+      this.setData({
+        diceResult,
+        diceImg,
+      });
+      const moveTimer = setTimeout(() => {
+        clearTimeout(moveTimer);
+        this.movePlayer(diceResult);
+      }, 200);
+    }, 1000);
   },
 
   // 玩家移动
@@ -151,11 +217,11 @@ Page({
     const targetPosition = (startPosition + diceResult) % board.length;
 
     // 逐步移动
-    this.animatePlayerMovement(startPosition, targetPosition, 0);
+    this.animatePlayerMovement(startPosition, targetPosition);
   },
 
   // 逐步动画移动
-  animatePlayerMovement(start, target, step) {
+  animatePlayerMovement(start, target) {
     const { players, board, currentPlayerIndex } = this.data;
     const player = players[currentPlayerIndex];
 
@@ -163,6 +229,7 @@ Page({
       // 动画结束，处理格子事件
       this.handleTileEvent(player, board[player.position]);
       this.setData({
+        canRollDice: true,
         players,
         currentPlayerIndex: (currentPlayerIndex + 1) % players.length,
       });
@@ -173,9 +240,11 @@ Page({
     const nextPosition = (start + 1) % board.length;
     player.position = nextPosition; // 更新玩家位置
 
+    const duration = 500;
+
     // 创建动画
     const animation = wx.createAnimation({
-      duration: 500,
+      duration,
       timingFunction: "ease",
     });
 
@@ -192,8 +261,8 @@ Page({
 
     // 递归调用，以逐步移动
     setTimeout(() => {
-      this.animatePlayerMovement(nextPosition, target, step + 1);
-    }, 500); // 延迟500ms进行下一步移动
+      this.animatePlayerMovement(nextPosition, target);
+    }, duration); // 延迟500ms进行下一步移动
   },
 
   // 所有格子事件
@@ -201,6 +270,8 @@ Page({
     const { players, board, chanceEvents, trapEvents } = this.data;
 
     switch (tile.type) {
+      case "start":
+        this.handleStartEvent(player, tile);
       case "property":
         this.handlePropertyEvent(player, tile);
         break;
@@ -214,44 +285,53 @@ Page({
         this.handleShopEvent(player);
         break;
       default:
-        console.log(`${player.name} 来到了特殊格子。`);
+        break;
     }
 
-    // 最后再次更新数据以确保所有更改都被应用
     this.setData({
-      players,
       board,
+      players,
     });
   },
 
-  // 土地格子
+  // 起点
+  handleStartEvent(player, tile) {
+    const { players } = this.data;
+    wx.showToast({
+      title: `${player.name} 经过了起点，获得￥${tile.price}补贴`,
+      icon: "none",
+    });
+    player.money += tile.price;
+    this.setData({ players });
+  },
+
+  // 空地
   handlePropertyEvent(player, tile) {
     const { players, board } = this.data;
     switch (true) {
-      case !tile.owner: // 如果没有所有者
+      case !tile.owner:
         wx.showModal({
-          title: "占领空地",
           content: `你要占领此空地吗？价格为 ¥${tile.price}`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= tile.price) {
                 player.money -= tile.price;
                 tile.owner = player.id;
-                // 更新该空地的背景色
                 tile.bgColor = player.bgColor;
               } else {
                 wx.showToast({
-                  title: "金钱不足！",
+                  title: "资产不足！",
                   icon: "none",
                 });
               }
+              this.checkGameOver(players);
               this.setData({ players, board });
             }
           },
         });
         break;
-      case tile.owner !== player.id: // 如果地块有其他玩家的所有者
-        const toll = tile.price * 0.1; // 例如过路费为地块价格的10%
+      case tile.owner !== player.id:
+        const toll = tile.price * 0.5; // TODO 动态设置过路费价格
         player.money -= toll;
         const owner = players.find((p) => p.id === tile.owner);
         owner.money += toll;
@@ -261,12 +341,13 @@ Page({
           icon: "none",
         });
 
+        this.checkGameOver(players);
         this.setData({ players, board });
         break;
     }
   },
 
-  // 机会格子
+  // 机会
   handleChanceEvent(player, chanceEvents) {
     const { players, board } = this.data;
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
@@ -292,10 +373,11 @@ Page({
         break;
     }
 
+    this.checkGameOver(players);
     this.setData({ players });
   },
 
-  // 陷阱格子
+  // 陷阱
   handleTrapEvent(player, trapEvents) {
     const { players } = this.data;
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
@@ -315,53 +397,28 @@ Page({
     }
 
     this.setData({ players });
+    this.checkGameOver(players);
   },
 
-  // 商店格子
+  // 商店
   handleShopEvent(player) {
-    const { players } = this.data;
+    const { players, items } = this.data;
+    const itemList = items.map(({ name, price }) => `购买${name}(￥${price})`);
     wx.showActionSheet({
-      itemList: ["购买双倍卡", "购买控制骰子", "购买防护罩"],
+      itemList,
       success: (res) => {
-        let cost;
-        switch (res.tapIndex) {
-          case 0:
-            cost = 50;
-            if (player.money >= cost) {
-              player.items.push("双倍卡");
-              player.money -= cost;
-              wx.showToast({ title: "成功购买双倍卡！", icon: "none" });
-            } else {
-              wx.showToast({ title: "金钱不足！", icon: "none" });
-            }
-            break;
-          case 1:
-            cost = 30;
-            if (player.money >= cost) {
-              player.items.push("控制骰子");
-              player.money -= cost;
-              wx.showToast({ title: "成功购买控制骰子！", icon: "none" });
-            } else {
-              wx.showToast({ title: "金钱不足！", icon: "none" });
-            }
-            break;
-          case 2:
-            cost = 40;
-            if (player.money >= cost) {
-              player.items.push("防护罩");
-              player.money -= cost;
-              wx.showToast({ title: "成功购买防护罩！", icon: "none" });
-            } else {
-              wx.showToast({ title: "金钱不足！", icon: "none" });
-            }
-            break;
-          default:
-            break;
+        const { tapIndex } = res;
+        const { name, price } = items[tapIndex];
+        if (player.money >= price) {
+          player.items.push(name);
+          player.money -= price;
+          wx.showToast({ title: `成功购买${name}！`, icon: "none" });
+        } else {
+          wx.showToast({ title: "资产不足！", icon: "none" });
         }
+
+        this.checkGameOver(players);
         this.setData({ players });
-      },
-      fail: () => {
-        wx.showToast({ title: "操作取消！", icon: "none" });
       },
     });
   },
@@ -399,5 +456,55 @@ Page({
     }
 
     this.setData({ players });
+  },
+
+  // 检查玩家是否破产
+  checkPlayerBankrupt(player) {
+    const { players } = this.data;
+
+    if (player.money < 0) {
+      // 已破产的不弹提示
+      if (player.isBankrupt) return true;
+
+      wx.showToast({
+        title: `${player.name} 破产了！`,
+        icon: "none",
+      });
+
+      player.isBankrupt = true;
+      this.setData({ players });
+
+      return true;
+    }
+
+    return false;
+  },
+
+  // 检查游戏是否结束
+  checkGameOver(players) {
+    setTimeout(() => {
+      const remainingPlayers = players.filter(
+        (player) => !this.checkPlayerBankrupt(player)
+      );
+
+      // 如果只剩一名玩家存活，游戏结束
+      if (remainingPlayers.length <= 1) {
+        const winner = remainingPlayers[0];
+
+        wx.showModal({
+          title: "游戏结束",
+          content: `${winner.name} 获得胜利！`,
+          showCancel: false,
+          success: () => {
+            this.resetGame();
+          },
+        });
+      }
+    }, 1000);
+  },
+
+  // TODO 重新开始游戏
+  resetGame() {
+    this.onLoad();
   },
 });

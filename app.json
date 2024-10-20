@@ -1,5 +1,8 @@
 {
-  "pages": ["pages/index/index"],
+  "pages": [
+    "pages/index/index",
+    "pages/game/game"
+  ],
   "window": {
     "navigationBarTitleText": "大富翁",
     "navigationBarTextStyle": "black",

@@ -1,133 +1,101 @@
-.container {
+.page-index {
+  position: relative;
+}
+
+.login-tips,
+.user-info-tips {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.btn-login {
+  position: fixed;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+.login-user-info .avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  background: none;
+  padding: 0;
+}
+
+.login-user-info .avatar-wrapper::after {
+  border: none;
+}
+
+.avatar-wrapper .avatar {
+  width: 120px;
+  height: 120px;
+}
+
+.login-user-info .nickname {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.room-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding-top: 200rpx;
-  overflow: auto;
-}
-
-.players-info {
-  display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  padding: 0 10px;
+  width: 100vw;
+  height: 100vh;
 }
 
-.player-info {
-  flex: 1;
-  margin-right: 6px;
-  padding: 6px;
-  font-weight: bold;
-  font-size: 10px;
-  border-radius: 10px;
-}
-
-.player-info:last-child {
-  margin-right: 0;
-}
-
-.player-user {
-  display: flex;
-  margin-bottom: 4px;
-}
-
-.player-avatar {
-  width: 30px;
-  height: 30px;
-  margin-right: 4px;
-  background-size: 100% 100%;
-  background-position: center center;
-  background-repeat: no-repeat;
-  border-radius: 4px;
-}
-
-.player-name {
-  color: #fff;
-}
-
-.player-status {
-  margin-top: 4px;
-  color: yellow;
-}
-
-.player-money {
-  color: #fff;
-}
-
-.player-items {
-  color: #fff;
-}
-
-.game-board {
-  position: relative;
-  width: 300px;
-  height: 300px;
-  margin-top: 40px;
-}
-
-.dice-container {
+.modal-mask {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
-  margin: auto;
-  width: 80px;
-  height: 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid orange;
-  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
 }
 
-.dice-img {
+.room-modal .modal-content {
+  padding: 20px;
+  background: orange;
+  border-radius: 20px;
+}
+
+.room-modal .players {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.player-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.player-slot:last-child {
+  margin-right: 0;
+}
+
+.player-slot .avatar {
   width: 60px;
   height: 60px;
+  padding: 0;
   border-radius: 50%;
-  background-size: 100% 100%;
-  background-position: center center;
-  background-repeat: no-repeat;
+  margin-bottom: 5px;
 }
 
-.tile {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-size: 10px;
+.player-slot .nickname {
+  font-size: 12px;
   font-weight: bold;
-  border: 0.5px solid #ccc;
 }
 
-.player-marker {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: bold;
-  text-align: center;
-  transition: all 0.5s ease;
-}
-
-.ad {
-  position: fixed;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 10vh;
-  color: #fff;
-  font-size: 40px;
-  background-color: indianred;
+.btn-start-match {
+  margin-top: 40px;
 }

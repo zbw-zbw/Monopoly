@@ -1,37 +1,31 @@
-<view class="container">
-  <!-- 玩家信息 -->
-  <view class="players-info">
-    <block wx:for="{{players}}" wx:key="id">
-      <view class="player-info" style="background-color: {{item.bgColor}};">
-        <view class="player-user">
-          <view class="player-avatar" style="background-image: url('{{item.avatar}}');"></view>
-          <view class="player-name-status">
-            <view class="player-name">{{item.name}}</view>
-            <view class="player-status">{{item.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : ''}}</view>
-          </view>
+<view class="page page-index">
+  <view class="login-user-info" wx:if="{{isLogin}}">
+    <!-- 用户信息 -->
+    <view class="user-info-tips">点击下方头像/昵称进行修改</view>
+    <button open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" class="avatar-wrapper">
+      <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
+    </button>
+    <input type="nickname" class="nickname" value="{{userInfo.nickName}}" placeholder="请输入昵称" bindblur="onChangeNickName" />
+  </view>
+  <!-- 开始游戏 -->
+  <view class="btn-login">
+    <button wx:if="{{isLogin}}" bindtap="startGame">开始游戏</button>
+    <button wx:else bindtap="login">登录游戏</button>
+  </view>
+  <!-- 房间信息弹窗 -->
+  <modal class="room-modal" wx:if="{{isModalVisible}}">
+    <view class="modal-mask" bindtap="closeRoomModal"></view>
+    <view class="modal-content">
+      <text>房间 ID: {{roomId}}</text>
+      <view class="players">
+        <view class="player-slot" wx:for="{{playerSlots}}" wx:key="index">
+          <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <button wx:else class="avatar" open-type="share" data-index="{{index}}">+</button>
+          <text class="nickname">{{item.nickName}}</text>
         </view>
-        <view class="player-money">资产：¥{{item.money}}</view>
-        <view class="player-items">道具：{{item.items.length > 0 ? item.items : '无'}}</view>
       </view>
-    </block>
-  </view>
-
-  <!-- 地图 -->
-  <view class="game-board">
-    <!-- 掷骰子按钮 -->
-    <view class="dice-container" bindtap="rollDice">
-      <view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
+      <button class="btn-start-match" bindtap="startMatch">开始游戏</button>
     </view>
-    <block wx:for="{{board}}" wx:key="index">
-      <view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}}</view>
-    </block>
-    <!-- 玩家位置标识 -->
-    <block wx:for="{{players}}" wx:key="id">
-      <view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x + 3}}px; top: {{board[item.position].y +3}}px; background-color: {{item.bgColor}};" animation="{{playerAnimation}}">
-        {{item.name}}
-      </view>
-    </block>
-  </view>
-  <!-- 广告位 -->
-  <view class="ad">广告位</view>
+  </modal>
+
 </view>

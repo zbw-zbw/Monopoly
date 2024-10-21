@@ -75,18 +75,18 @@
   margin-top: 20px;
 }
 
-.player-slot {
+.players .player {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-right: 10px;
 }
 
-.player-slot:last-child {
+.players .player:last-child {
   margin-right: 0;
 }
 
-.player-slot .avatar {
+.players .player .avatar {
   width: 60px;
   height: 60px;
   padding: 0;
@@ -94,7 +94,7 @@
   margin-bottom: 5px;
 }
 
-.player-slot .nickname {
+.players .player .nickname {
   font-size: 12px;
   font-weight: bold;
 }

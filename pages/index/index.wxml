@@ -18,7 +18,7 @@
     <view class="modal-content">
       <text>房间 ID: {{roomId}}</text>
       <view class="players">
-        <view class="player-slot" wx:for="{{playerSlots}}" wx:key="index">
+        <view class="player" wx:for="{{players}}" wx:key="index">
           <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"></image>
           <button wx:else class="avatar" open-type="share" data-index="{{index}}">+</button>
           <text class="nickname">{{item.nickName}}</text>

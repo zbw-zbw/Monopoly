@@ -9,11 +9,9 @@ Page({
       avatarUrl: defaultAvatarUrl,
       nickName: "",
     },
-    isModalVisible: false,
     roomId: "",
-    players: [],
-    playerSlots: Array(4).fill({ avatarUrl: "", nickName: "" }),
-    watcher: null,
+    isModalVisible: false,
+    players: Array(4).fill({ avatarUrl: "", nickName: "" }),
   },
 
   onLoad(options) {
@@ -28,8 +26,8 @@ Page({
   onShow() {},
 
   onUnload() {
-    if (this.data.watcher) {
-      this.data.watcher.close();
+    if (this.watcher) {
+      this.watcher.close();
     }
   },
 
@@ -63,6 +61,8 @@ Page({
     wx.cloud.callFunction({
       name: "login",
       success: (res) => {
+        wx.showToast({ title: "登录成功", icon: "none" });
+
         const { openid } = res.result;
         this.setData({ isLogin: true, openid });
         this.updateUserInDatabase(openid);
@@ -125,19 +125,14 @@ Page({
       name: "createRoom",
       data: { userInfo: this.data.userInfo },
       success: (res) => {
+        wx.showToast({ title: "创建房间成功", icon: "none" });
+
         const { roomId, players } = res.result;
-        this.setData({ roomId, players });
-        this.updatePlayerSlots(players);
+        const updatePlayers = this.configPlayers(players);
+        this.setData({ roomId, updatePlayers });
         this.showRoomModal();
 
-        wx.showToast({
-          title: "创建房间成功",
-          icon: "none",
-        });
-
-        // 设置实时监听
-        this.listenToRoomUpdates(roomId);
-        console.log("创建房间成功");
+        this.watchRoom(roomId);
       },
       fail: (error) => {
         console.error("创建房间失败:", error);
@@ -151,19 +146,14 @@ Page({
       data: { roomId, userInfo: this.data.userInfo },
       success: (res) => {
         if (res.result.success) {
+          wx.showToast({ title: "加入房间成功", icon: "none" });
+
           const players = res.result.players;
-          this.setData({ roomId, players });
-          this.updatePlayerSlots(players);
+          const updatePlayers = this.configPlayers(players);
+          this.setData({ roomId, players: updatePlayers });
           this.showRoomModal();
 
-          wx.showToast({
-            title: "加入房间成功",
-            icon: "none",
-          });
-
-          // 设置实时监听
-          this.listenToRoomUpdates(roomId);
-          console.log("加入房间成功");
+          this.watchRoom(roomId);
         } else {
           wx.showToast({
             title: res.result.message || "加入房间失败",
@@ -172,37 +162,34 @@ Page({
         }
       },
       fail: (error) => {
+        wx.showToast({
+          title: res.result.message || "加入房间失败",
+          icon: "none",
+        });
         console.error("加入房间失败:", error);
       },
     });
   },
 
-  // 设置实时监听
-  listenToRoomUpdates(roomId) {
+  watchRoom(roomId) {
     const db = wx.cloud.database();
-    const watcher = db
+    this.watcher = db
       .collection("rooms")
       .where({ roomId })
       .watch({
-        onChange: function (snapshot) {
+        onChange: (snapshot) => {
           console.log("snapshot", snapshot);
-          if (snapshot.docChanges.length > 0) {
-            const updatedRoom = snapshot.docs[0];
-            if (updatedRoom && updatedRoom.data) {
-              const updatedPlayers = updatedRoom.data.players;
-              this.setData({
-                players: updatedPlayers,
-              });
-              this.updatePlayerSlots(updatedPlayers);
-            }
+          if (snapshot.docs.length > 0) {
+            const players = snapshot.docs[0].players;
+            console.log("roomUpdates, players:", players);
+            const updatePlayers = this.configPlayers(players);
+            this.setData({ players: updatePlayers });
           }
         },
         onError: (error) => {
-          console.error("the watch closed because of error", error);
+          console.error("the watch closed because of error:", error);
         },
       });
-
-    this.setData({ watcher });
   },
 
   showRoomModal() {
@@ -213,11 +200,12 @@ Page({
     this.setData({ isModalVisible: false });
   },
 
-  updatePlayerSlots(players) {
-    const slots = this.data.playerSlots.map((_slot, index) => {
+  configPlayers(players) {
+    const updatePlayers = this.data.players.map((_player, index) => {
       return players[index] || { avatarUrl: "", nickName: "" };
     });
-    this.setData({ playerSlots: slots });
+
+    return updatePlayers;
   },
 
   startMatch() {

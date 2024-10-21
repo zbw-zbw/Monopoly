@@ -27,5 +27,4 @@
       <button class="btn-start-match" bindtap="startMatch">开始游戏</button>
     </view>
   </modal>
-
 </view>

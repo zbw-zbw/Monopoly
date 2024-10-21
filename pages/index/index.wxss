@@ -30,6 +30,7 @@
 .avatar-wrapper .avatar {
   width: 120px;
   height: 120px;
+  border-radius: 50%;
 }
 
 .login-user-info .nickname {
@@ -48,6 +49,7 @@
   align-items: center;
   width: 100vw;
   height: 100vh;
+  max-width: 500px;
 }
 
 .modal-mask {
@@ -63,6 +65,7 @@
   padding: 20px;
   background: orange;
   border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .room-modal .players {
@@ -98,4 +101,9 @@
 
 .btn-start-match {
   margin-top: 40px;
+  padding: 10px 20px;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 5px;
 }

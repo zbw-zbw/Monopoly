@@ -11,16 +11,15 @@
 					</view>
 				</view>
 				<view class="player-money">资产：¥{{player.money}}</view>
-				<view class="player-items-wrap" wx:if="{{player.items.length}}">
+				<view class="player-tile-count">领地：{{player.ownedPropertiesCount}}</view>
+				<view class="player-items-wrap">
 					<view class="player-items" wx:for="{{player.items}}" wx:for-item="item" wx:key="name">
 						<text bindtap="useItem" data-item="{{item}}" data-index="{{index}}">{{item.name}} x{{item.count}}</text>
 					</view>
 				</view>
-				<view class="player-items-empty" wx:else>暂无道具</view>
 			</view>
 		</block>
 	</view>
-
 	<!-- 地图 -->
 	<view class="game-board">
 		<!-- 掷骰子按钮 -->
@@ -28,7 +27,7 @@
 			<view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
 		</view>
 		<block wx:for="{{board}}" wx:key="index">
-			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}}</view>
+			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
 		</block>
 		<!-- 玩家位置标识 -->
 		<block wx:for="{{players}}" wx:key="id">
@@ -37,9 +36,6 @@
 			</view>
 		</block>
 	</view>
-
-
-
 	<!-- 广告位 -->
 	<view class="ad">广告位</view>
 </view>

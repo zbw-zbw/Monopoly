@@ -26,7 +26,7 @@
 
 .player-user {
   display: flex;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .player-avatar {
@@ -48,7 +48,9 @@
   color: yellow;
 }
 
-.player-money {
+.player-money,
+.player-tile-count {
+  margin-bottom: 4px;
   color: #fff;
 }
 

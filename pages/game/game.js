@@ -1,4 +1,8 @@
+const playerInitMoney = 5000;
+const unitPrice = 500;
+
 Page({
+  // TODO 所有游戏数据应上传服务端 房间内所有玩家实时共享信息
   data: {
     canRollDice: true,
     diceResult: 0,
@@ -11,57 +15,81 @@ Page({
         id: 1,
         name: "宝文",
         avatar: "/assets/avatar-wen.jpg",
-        money: 500,
+        money: playerInitMoney,
+        ownedPropertiesCount: 0,
         position: 0,
         bgColor: "tomato",
         items: [],
         doubleCardActive: false,
         shieldActive: false,
+        skipNextTurn: false,
         isBankrupt: false,
       },
       {
         id: 2,
         name: "钦贵",
         avatar: "/assets/avatar-gui.jpg",
-        money: 500,
+        money: playerInitMoney,
+        ownedPropertiesCount: 0,
         position: 0,
         bgColor: "skyblue",
         items: [],
         doubleCardActive: false,
         shieldActive: false,
+        skipNextTurn: false,
         isBankrupt: false,
       },
       {
         id: 3,
         name: "黄灿",
         avatar: "/assets/avatar-can.jpg",
-        money: 500,
+        money: playerInitMoney,
+        ownedPropertiesCount: 0,
         position: 0,
         bgColor: "orange",
         items: [],
         doubleCardActive: false,
         shieldActive: false,
+        skipNextTurn: false,
         isBankrupt: false,
       },
     ],
     chanceEvents: [
       {
         type: "reward",
-        amount: 1000,
-        message: "你找到了隐藏的宝藏，获得了 ¥1000！",
+        amount: unitPrice,
+        message: `你中了彩票，获得 ¥${unitPrice}！`,
       },
-      { type: "penalty", amount: 500, message: "你被罚款了 ¥500！" },
-      // { type: "move", steps: 3, message: "你获得了幸运步数，前进3格！" },
-      // { type: "move", steps: -2, message: "你不小心摔倒了，后退2格！" },
-      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
-      { type: "item", item: "双倍卡", message: "你获得了一个双倍卡！" },
-      { type: "item", item: "控制骰子", message: "你获得了一个控制骰子！" },
-      { type: "item", item: "防护罩", message: "你获得了一个防护罩！" },
+      {
+        type: "penalty",
+        amount: unitPrice,
+        message: `你随地扔垃圾，罚款 ¥${unitPrice}！`,
+      },
+      { type: "teleport", destination: 0, message: "啊哦，你被传送回了起点！" },
+      {
+        type: "item",
+        item: "双倍卡",
+        message: "你运气爆棚，捡到了双倍卡！",
+      },
+      {
+        type: "item",
+        item: "控制骰子",
+        message: "运气爆棚，捡到了控制骰子！",
+      },
+      {
+        type: "item",
+        item: "防护罩",
+        message: "运气爆棚，捡到了防护罩！",
+      },
     ],
     trapEvents: [
-      { type: "penalty", amount: 500, message: "你掉进了陷阱，罚款 ¥500！" },
-      { type: "skip", message: "你掉进了陷阱，失去一次行动机会！" },
-      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
+      {
+        type: "penalty",
+        amount: unitPrice,
+        message: `你随地扔垃圾，罚款 ¥${unitPrice}！`,
+      },
+      { type: "skip", message: "你掉进了陷阱，跳过下一轮行动！" },
+      { type: "teleport", destination: 0, message: "啊哦，你被传送回了起点！" },
     ],
     items: [
       {
@@ -79,46 +107,18 @@ Page({
     ],
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
   onLoad(options) {
     this.initBoard();
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
   onReady() {},
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow() {},
 
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
   onHide() {},
 
-  /**
-   * 生命周期函数--监听页面卸载
-   */
   onUnload() {},
 
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {},
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {},
-
-  /**
-   * 用户点击右上角分享
-   */
   onShareAppMessage() {},
 
   // 初始化地图
@@ -133,33 +133,33 @@ Page({
         type: "property",
         price: 0,
         bgColor: "#ffffff",
+        level: 0,
       };
 
       switch (true) {
         case i === 0:
           tile.name = "起点";
           tile.type = "start"; // 起点
-          tile.bgColor = "#ff0757";
+          tile.bgColor = "#02ffd0";
           tile.price = 1000;
           break;
         case i % 6 === 0:
           tile.name = "商店";
           tile.type = "shop"; // 商店
-          tile.bgColor = "#ec561d";
+          tile.bgColor = "#881280";
           break;
         case i % 7 === 0:
           tile.name = "机会";
           tile.type = "chance"; // 机会卡
-          tile.bgColor = "#f70ccf";
+          tile.bgColor = "#808002";
           break;
         case i % 8 === 0:
           tile.name = "陷阱";
           tile.type = "trap"; // 陷阱
-          tile.bgColor = "#1af70c";
+          tile.bgColor = "#1a1aa6";
           break;
         default:
-          // TODO 动态设置价格
-          tile.price = 500; // 空地
+          tile.price = unitPrice; // 空地
           break;
       }
 
@@ -192,7 +192,7 @@ Page({
 
   // 摇骰子
   rollDice() {
-    const { canRollDice, currentPlayerIndex, players } = this.data;
+    const { canRollDice } = this.data;
     if (!canRollDice) return;
 
     this.setData({
@@ -222,7 +222,10 @@ Page({
 
     // 计算目标位置
     const startPosition = player.position;
-    const targetPosition = (startPosition + diceResult) % board.length;
+
+    // 双倍卡
+    const diceToMove = player.doubleCardActive ? diceResult * 2 : diceResult;
+    const targetPosition = (startPosition + diceToMove) % board.length;
 
     // 逐步移动
     this.animatePlayerMovement(startPosition, targetPosition);
@@ -236,11 +239,7 @@ Page({
     if (start === target) {
       // 动画结束，处理格子事件
       this.handleTileEvent(player, board[player.position]);
-      this.setData({
-        canRollDice: true,
-        players,
-        currentPlayerIndex: (currentPlayerIndex + 1) % players.length,
-      });
+
       return;
     }
 
@@ -271,6 +270,24 @@ Page({
     setTimeout(() => {
       this.animatePlayerMovement(nextPosition, target);
     }, duration); // 延迟500ms进行下一步移动
+  },
+
+  nextPlayer() {
+    const { players, currentPlayerIndex } = this.data;
+    let nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+    // 查找下一个可以行动的玩家
+    while (players[nextPlayerIndex].skipNextTurn) {
+      players[nextPlayerIndex].skipNextTurn = false;
+      nextPlayerIndex = (nextPlayerIndex + 1) % players.length; // 切换到下一个玩家
+    }
+
+    // 更新当前玩家索引
+    this.setData({
+      currentPlayerIndex: nextPlayerIndex,
+      canRollDice: true,
+      players,
+    });
   },
 
   // 所有格子事件
@@ -317,6 +334,7 @@ Page({
   handlePropertyEvent(player, tile) {
     const { players, board } = this.data;
     switch (true) {
+      //经过空地 可占领
       case !tile.owner:
         wx.showModal({
           content: `你要占领此空地吗？价格为 ¥${tile.price}`,
@@ -326,6 +344,8 @@ Page({
                 player.money -= tile.price;
                 tile.owner = player.id;
                 tile.bgColor = player.bgColor;
+                tile.level = 1;
+                player.ownedPropertiesCount += 1;
               } else {
                 wx.showToast({
                   title: "资产不足！",
@@ -335,29 +355,71 @@ Page({
               this.checkGameOver(players);
               this.setData({ players, board });
             }
+
+            this.nextPlayer();
           },
         });
         break;
-      case tile.owner !== player.id:
-        const toll = tile.price * 0.5; // TODO 动态设置过路费价格
-        player.money -= toll;
-        const owner = players.find((p) => p.id === tile.owner);
-        owner.money += toll;
+      // 经过自家领地 可升级
+      case tile.owner === player.id:
+        const upgradeCost = tile.level * tile.price;
+        wx.showModal({
+          content: `你要升级此空地吗？当前等级: ${tile.level}，升级费用: ¥${upgradeCost}`,
+          success: ({ confirm }) => {
+            if (confirm) {
+              if (player.money >= upgradeCost) {
+                player.money -= upgradeCost;
+                if (tile.level < 5) {
+                  tile.level += 1;
+                  wx.showToast({
+                    title: `成功升级到等级 ${tile.level}!`,
+                    icon: "none",
+                  });
+                } else {
+                  wx.showToast({
+                    title: "已达到最高等级！",
+                    icon: "none",
+                  });
+                }
+              } else {
+                wx.showToast({
+                  title: "资产不足！",
+                  icon: "none",
+                });
+              }
+              this.setData({ players, board });
+            }
 
-        wx.showToast({
-          title: `${player.name} 支付了 ¥${toll} 过路费给 ${owner.name}`,
-          icon: "none",
+            this.nextPlayer();
+          },
         });
+        break;
+      // 经过别家领地 需过路费
+      case tile.owner !== player.id:
+        const toll = tile.price * tile.level;
+        const shieldActive = this.checkShieldActive(player);
+        if (!shieldActive) {
+          player.money -= toll;
+          const owner = players.find((p) => p.id === tile.owner);
+          owner.money += toll;
 
-        this.checkGameOver(players);
-        this.setData({ players, board });
+          wx.showToast({
+            title: `${player.name} 支付了 ¥${toll} 过路费给 ${owner.name}`,
+            icon: "none",
+          });
+
+          this.checkGameOver(players);
+          this.setData({ players, board });
+        }
+
+        this.nextPlayer();
         break;
     }
   },
 
   // 机会
   handleChanceEvent(player, chanceEvents) {
-    const { players, board } = this.data;
+    const { players } = this.data;
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
     wx.showToast({ title: event.message, icon: "none" });
 
@@ -367,11 +429,8 @@ Page({
         player.money += event.amount;
         break;
       case "penalty":
-        player.money -= event.amount;
-        break;
-      case "move":
-        player.position =
-          (player.position + event.steps + board.length) % board.length;
+        const shieldActive = this.checkShieldActive(player);
+        if (!shieldActive) player.money -= event.amount;
         break;
       case "teleport":
         player.position = event.destination;
@@ -394,10 +453,11 @@ Page({
     // 执行事件效果
     switch (event.type) {
       case "penalty":
-        player.money -= event.amount;
+        const shieldActive = this.checkShieldActive(player);
+        if (!shieldActive) player.money -= event.amount;
         break;
       case "skip":
-        // 此处可以添加跳过行动的逻辑
+        player.skipNextTurn = true; // 设置跳过标记
         break;
       case "teleport":
         player.position = event.destination;
@@ -406,6 +466,17 @@ Page({
 
     this.setData({ players });
     this.checkGameOver(players);
+  },
+
+  // 检查是否使用了防护罩
+  checkShieldActive(player) {
+    if (player.shieldActive) {
+      player.shieldActive = false;
+      wx.showToast({ title: "防护罩已生效，免受罚款！", icon: "none" });
+      return true;
+    }
+
+    return false;
   },
 
   // 商店
@@ -427,6 +498,11 @@ Page({
 
         this.checkGameOver(players);
         this.setData({ players });
+        this.nextPlayer();
+      },
+      fail: (error) => {
+        this.nextPlayer();
+        console.warn("购买道具失败：", error);
       },
     });
   },

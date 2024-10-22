@@ -15,6 +15,9 @@ Page({
   },
 
   onLoad(options) {
+    // FIXME: 本地调试代码
+    // wx.navigateTo({ url: `/pages/game/game?roomId=${this.data.roomId}` });
+
     this.initUserInfo();
 
     if (options.roomId) {
@@ -44,7 +47,7 @@ Page({
     console.log("onShareAppMessage roomId:", roomId);
 
     return {
-      title: "加入我的大富翁房间！", // 快来和我一起开心摸鱼吧！
+      title: "快来和我一起开心摸鱼吧！",
       imageUrl: "https://s21.ax1x.com/2024/10/20/pAawfZd.webp",
       path: `/pages/index/index?roomId=${roomId}`,
     };

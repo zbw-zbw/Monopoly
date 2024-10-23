@@ -1,7 +1,6 @@
 <view class="page page-index">
   <view class="login-user-info" wx:if="{{isLogin}}">
     <!-- 用户信息 -->
-    <view class="user-info-tips">点击下方头像/昵称进行修改</view>
     <button open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" class="avatar-wrapper">
       <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
     </button>
@@ -16,15 +15,15 @@
   <modal class="room-modal" wx:if="{{isModalVisible}}">
     <view class="modal-mask" bindtap="closeRoomModal"></view>
     <view class="modal-content">
-      <text>房间 ID: {{roomId}}</text>
+      <text class="room-id">房间名称: {{roomId}}</text>
       <view class="players">
-        <view class="player" wx:for="{{players}}" wx:key="index">
+        <view class="player" wx:for="{{playerSlots}}" wx:key="index">
           <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"></image>
           <button wx:else class="avatar" open-type="share" data-index="{{index}}">+</button>
           <text class="nickname">{{item.nickName}}</text>
         </view>
       </view>
-      <button class="btn-start-match" bindtap="startMatch">开始游戏</button>
+      <button class="btn-enter-game" bindtap="enterGame">开始游戏</button>
     </view>
   </modal>
 </view>

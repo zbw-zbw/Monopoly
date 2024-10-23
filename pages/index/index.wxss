@@ -62,13 +62,22 @@
 }
 
 .room-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  width: 90vw;
+  height: 30vh;
   padding: 20px;
   background: orange;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
+.room-modal .room-id {
+  font-weight: bold;
+}
+
 .room-modal .players {
+  flex: 1;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -76,6 +85,7 @@
 }
 
 .players .player {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -99,8 +109,8 @@
   font-weight: bold;
 }
 
-.btn-start-match {
-  margin-top: 40px;
+.btn-enter-game {
+  margin-top: 20px;
   padding: 10px 20px;
   background-color: #f39c12;
   color: white;

@@ -4,29 +4,33 @@ const defaultAvatarUrl =
 Page({
   data: {
     isLogin: false,
-    openid: "",
     userInfo: {
+      openid: "",
       avatarUrl: defaultAvatarUrl,
       nickName: "",
     },
     roomId: "",
     isModalVisible: false,
-    players: Array(4).fill({ avatarUrl: "", nickName: "" }),
+    players: [],
+    playerSlots: Array(4).fill({ avatarUrl: "", nickName: "" }),
   },
 
   onLoad(options) {
     // FIXME: 本地调试代码
-    // wx.navigateTo({ url: `/pages/game/game?roomId=${this.data.roomId}` });
+    wx.navigateTo({
+      url: `/pages/game/game?roomId=内测玩家专属房间`,
+    });
+    return;
 
     this.initUserInfo();
 
     if (options.roomId) {
-      this.setData({ roomId: options.roomId });
+      this.setData({
+        roomId: options.roomId,
+      });
       this.joinRoom(options.roomId);
     }
   },
-
-  onShow() {},
 
   onUnload() {
     if (this.watcher) {
@@ -56,7 +60,12 @@ Page({
   initUserInfo() {
     const cacheUserInfo = wx.getStorageSync("userInfo");
     if (cacheUserInfo) {
-      this.setData({ userInfo: JSON.parse(cacheUserInfo) });
+      this.setData({
+        isLogin: true,
+        userInfo: JSON.parse(cacheUserInfo),
+      });
+    } else {
+      this.login();
     }
   },
 
@@ -64,11 +73,12 @@ Page({
     wx.cloud.callFunction({
       name: "login",
       success: (res) => {
-        wx.showToast({ title: "登录成功", icon: "none" });
-
+        wx.showToast({
+          title: "登录成功",
+          icon: "none",
+        });
         const { openid } = res.result;
-        this.setData({ isLogin: true, openid });
-        this.updateUserInDatabase(openid);
+        this.updateUserInfo({ openid });
       },
       fail: (error) => {
         console.error("登录失败:", error);
@@ -76,17 +86,20 @@ Page({
     });
   },
 
-  updateUserInDatabase(openid) {
+  updateUserInDatabase(data) {
     const db = wx.cloud.database();
-    const { userInfo } = this.data;
     db.collection("users")
-      .where({ _openid: openid })
+      .where({
+        _openid: data.openid,
+      })
       .get({
         success: (res) => {
           if (res.data.length > 0) {
-            console.warn("用户已存在:", res.data);
+            db.collection("users").doc(res.data[0]._id).update({ data });
+            console.log("更新用户信息:", data);
           } else {
-            db.collection("users").add({ data: userInfo });
+            db.collection("users").add({ data });
+            console.log("添加新用户:", data);
           }
         },
         fail: (error) => {
@@ -97,44 +110,68 @@ Page({
 
   onChooseAvatar(e) {
     const { avatarUrl } = e.detail;
-    this.updateUserInfo({ avatarUrl });
+    this.updateUserInfo({
+      avatarUrl,
+    });
   },
 
   onChangeNickName(e) {
-    const name = e.detail.value;
-    if (name) {
-      this.updateUserInfo({ nickName: name });
+    const nickName = e.detail.value;
+    if (nickName) {
+      this.updateUserInfo({
+        nickName,
+      });
     } else {
-      wx.showToast({ title: "昵称不能为空", icon: "none" });
+      wx.showToast({
+        title: "昵称不能为空",
+        icon: "none",
+      });
     }
   },
 
   updateUserInfo(updates) {
-    const userInfo = { ...this.data.userInfo, ...updates };
-    this.setData({ userInfo });
+    const userInfo = {
+      ...this.data.userInfo,
+      ...updates,
+    };
+    this.setData({
+      isLogin: true,
+      userInfo,
+    });
     wx.setStorageSync("userInfo", JSON.stringify(userInfo));
+    this.updateUserInDatabase(userInfo);
   },
 
   startGame() {
-    if (this.data.isLogin && this.data.userInfo.nickName) {
+    if (this.data.userInfo.nickName) {
       this.createRoom();
     } else {
-      wx.showToast({ title: "请先登录并设置昵称", icon: "none" });
+      wx.showToast({
+        title: "请先设置昵称和头像",
+        icon: "none",
+      });
     }
   },
 
   createRoom() {
     wx.cloud.callFunction({
       name: "createRoom",
-      data: { userInfo: this.data.userInfo },
+      data: {
+        userInfo: this.data.userInfo,
+      },
       success: (res) => {
-        wx.showToast({ title: "创建房间成功", icon: "none" });
-
+        wx.showToast({
+          title: "创建房间成功",
+          icon: "none",
+        });
         const { roomId, players } = res.result;
-        const updatePlayers = this.configPlayers(players);
-        this.setData({ roomId, updatePlayers });
+        const playerSlots = this.updatePlayerSlots(players);
+        this.setData({
+          roomId,
+          players,
+          playerSlots,
+        });
         this.showRoomModal();
-
         this.watchRoom(roomId);
       },
       fail: (error) => {
@@ -146,27 +183,36 @@ Page({
   joinRoom(roomId) {
     wx.cloud.callFunction({
       name: "joinRoom",
-      data: { roomId, userInfo: this.data.userInfo },
+      data: {
+        roomId,
+        userInfo: this.data.userInfo,
+      },
       success: (res) => {
-        if (res.result.success) {
-          wx.showToast({ title: "加入房间成功", icon: "none" });
-
-          const players = res.result.players;
-          const updatePlayers = this.configPlayers(players);
-          this.setData({ roomId, players: updatePlayers });
+        const { success, message, players } = res.result;
+        if (success) {
+          wx.showToast({
+            title: message || "加入房间成功",
+            icon: "none",
+          });
+          const playerSlots = this.updatePlayerSlots(players);
+          this.setData({
+            roomId,
+            players,
+            playerSlots,
+          });
           this.showRoomModal();
-
           this.watchRoom(roomId);
         } else {
           wx.showToast({
-            title: res.result.message || "加入房间失败",
+            title: message || "加入房间失败",
             icon: "none",
           });
+          console.error("加入房间失败:", message);
         }
       },
       fail: (error) => {
         wx.showToast({
-          title: res.result.message || "加入房间失败",
+          title: "加入房间失败",
           icon: "none",
         });
         console.error("加入房间失败:", error);
@@ -181,12 +227,14 @@ Page({
       .where({ roomId })
       .watch({
         onChange: (snapshot) => {
-          console.log("snapshot", snapshot);
+          console.log("~ watchRoom ~ snapshot", snapshot);
           if (snapshot.docs.length > 0) {
             const players = snapshot.docs[0].players;
-            console.log("roomUpdates, players:", players);
-            const updatePlayers = this.configPlayers(players);
-            this.setData({ players: updatePlayers });
+            const playerSlots = this.updatePlayerSlots(players);
+            this.setData({
+              players,
+              playerSlots,
+            });
           }
         },
         onError: (error) => {
@@ -203,19 +251,55 @@ Page({
     this.setData({ isModalVisible: false });
   },
 
-  configPlayers(players) {
-    const updatePlayers = this.data.players.map((_player, index) => {
-      return players[index] || { avatarUrl: "", nickName: "" };
-    });
-
-    return updatePlayers;
+  updatePlayerSlots(players) {
+    return this.data.playerSlots.map(
+      (_playerSlot, index) => players[index] || { avatarUrl: "", nickName: "" }
+    );
   },
 
-  startMatch() {
-    if (this.data.players.length > 1) {
-      wx.navigateTo({ url: `/pages/game/game?roomId=${this.data.roomId}` });
+  enterGame() {
+    const { players, roomId } = this.data;
+
+    // FIXME: 本地调试代码
+    this.initializeGame(roomId, players);
+    return;
+
+    if (players.length > 1) {
+      this.initializeGame();
     } else {
-      wx.showToast({ title: "至少需要 2 位玩家才能开始游戏", icon: "none" });
+      wx.showToast({
+        title: "至少需要 2 位玩家才能开始游戏",
+        icon: "none",
+      });
     }
+  },
+
+  initializeGame() {
+    const { players, roomId } = this.data;
+    wx.cloud.callFunction({
+      name: "initializeGame",
+      data: {
+        roomId,
+        players,
+      },
+      success: (res) => {
+        if (res.result.success) {
+          wx.navigateTo({
+            url: `/pages/game/game?roomId=${roomId}`,
+          });
+        } else {
+          wx.showToast({
+            title: "初始化游戏失败，请稍后再试",
+          });
+          console.error("初始化游戏失败:", res.result);
+        }
+      },
+      fail: (error) => {
+        wx.showToast({
+          title: "初始化游戏失败，请稍后再试",
+        });
+        console.error("初始化游戏失败:", error);
+      },
+    });
   },
 });

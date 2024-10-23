@@ -1,12 +1,12 @@
 <view class="page page-game">
 	<!-- 玩家信息 -->
 	<view class="players-info">
-		<block wx:for="{{players}}" wx:for-item="player" wx:key="id">
-			<view class="player-info" style="background-color: {{player.bgColor}};">
+		<block wx:for="{{players}}" wx:for-item="player" wx:key="index">
+			<view class="player-info" style="background-color: {{player.primaryColor}};">
 				<view class="player-user">
-					<view class="player-avatar" style="background-image: url('{{player.avatar}}');"></view>
+					<view class="player-avatar" style="background-image: url('{{player.avatarUrl}}');"></view>
 					<view class="player-name-status">
-						<view class="player-name">{{player.name}}</view>
+						<view class="player-name">{{player.nickName}}</view>
 						<view class="player-status">{{player.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : ''}}</view>
 					</view>
 				</view>
@@ -30,9 +30,8 @@
 			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
 		</block>
 		<!-- 玩家位置标识 -->
-		<block wx:for="{{players}}" wx:key="id">
-			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x + 3}}px; top: {{board[item.position].y +3}}px; background-color: {{item.bgColor}};" animation="{{playerAnimation}}">
-				{{item.name}}
+		<block wx:for="{{players}}" wx:key="index">
+			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x + 3}}px; top: {{board[item.position].y +3}}px; background-color: {{item.primaryColor}}; background-image: url('{{item.avatarUrl}}'); border: 2px solid {{item.primaryColor}};" animation="{{playerAnimation}}">
 			</view>
 		</block>
 	</view>

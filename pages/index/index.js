@@ -16,20 +16,12 @@ Page({
   },
 
   onLoad(options) {
-    // FIXME: 本地调试代码
-    wx.navigateTo({
-      url: `/pages/game/game?roomId=内测玩家专属房间`,
-    });
-    return;
-
-    this.initUserInfo();
-
     if (options.roomId) {
       this.setData({
         roomId: options.roomId,
       });
-      this.joinRoom(options.roomId);
     }
+    this.initUserInfo();
   },
 
   onUnload() {
@@ -86,40 +78,45 @@ Page({
     });
   },
 
-  updateUserInDatabase(data) {
-    const db = wx.cloud.database();
-    db.collection("users")
-      .where({
-        _openid: data.openid,
-      })
-      .get({
-        success: (res) => {
-          if (res.data.length > 0) {
-            db.collection("users").doc(res.data[0]._id).update({ data });
-            console.log("更新用户信息:", data);
-          } else {
-            db.collection("users").add({ data });
-            console.log("添加新用户:", data);
-          }
-        },
-        fail: (error) => {
-          console.error("查询用户失败:", error);
-        },
-      });
-  },
-
   onChooseAvatar(e) {
     const { avatarUrl } = e.detail;
-    this.updateUserInfo({
-      avatarUrl,
+    const { userInfo } = this.data;
+    const cloudPath = `avatars/${userInfo.openid}_${Date.now()}.png`;
+    wx.cloud.uploadFile({
+      cloudPath,
+      filePath: avatarUrl,
+      success: (res) => {
+        const { fileID } = res;
+        this.updateUserInfo({
+          avatarUrl: fileID,
+        });
+        wx.showToast({
+          title: "头像上传成功",
+          icon: "none",
+        });
+      },
+      fail: (err) => {
+        console.error("头像上传失败:", err);
+        wx.showToast({
+          title: "头像上传失败",
+          icon: "none",
+        });
+      },
     });
   },
 
   onChangeNickName(e) {
     const nickName = e.detail.value;
+    const { userInfo } = this.data;
+    if (nickName === userInfo.nickName) return;
+
     if (nickName) {
       this.updateUserInfo({
         nickName,
+      });
+      wx.showToast({
+        title: "昵称修改成功",
+        icon: "none",
       });
     } else {
       wx.showToast({
@@ -139,17 +136,34 @@ Page({
       userInfo,
     });
     wx.setStorageSync("userInfo", JSON.stringify(userInfo));
-    this.updateUserInDatabase(userInfo);
+    wx.cloud.callFunction({
+      name: "updateUser",
+      data: userInfo,
+      success: (res) => {
+        console.log("更新用户信息成功:", res.result);
+      },
+      fail: (error) => {
+        console.error("更新用户信息失败:", error);
+      },
+    });
   },
 
   startGame() {
-    if (this.data.userInfo.nickName) {
-      this.createRoom();
-    } else {
+    const { userInfo, roomId } = this.data;
+    if (userInfo.avatarUrl === defaultAvatarUrl) {
       wx.showToast({
-        title: "请先设置昵称和头像",
+        title: "请设置头像",
         icon: "none",
       });
+    } else if (!userInfo.nickName) {
+      wx.showToast({
+        title: "请设置昵称",
+        icon: "none",
+      });
+    } else if (roomId) {
+      this.joinRoom(roomId);
+    } else {
+      this.createRoom();
     }
   },
 
@@ -181,6 +195,7 @@ Page({
   },
 
   joinRoom(roomId) {
+    console.log("userInfo", this.data.userInfo);
     wx.cloud.callFunction({
       name: "joinRoom",
       data: {
@@ -258,12 +273,7 @@ Page({
   },
 
   enterGame() {
-    const { players, roomId } = this.data;
-
-    // FIXME: 本地调试代码
-    this.initializeGame(roomId, players);
-    return;
-
+    const { players } = this.data;
     if (players.length > 1) {
       this.initializeGame();
     } else {
@@ -289,14 +299,14 @@ Page({
           });
         } else {
           wx.showToast({
-            title: "初始化游戏失败，请稍后再试",
+            title: "初始化游戏失败",
           });
           console.error("初始化游戏失败:", res.result);
         }
       },
       fail: (error) => {
         wx.showToast({
-          title: "初始化游戏失败，请稍后再试",
+          title: "初始化游戏失败",
         });
         console.error("初始化游戏失败:", error);
       },

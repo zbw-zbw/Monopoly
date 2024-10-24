@@ -13,7 +13,7 @@ exports.main = async (event) => {
 
     // 检查用户是否已在房间内
     const isExist = room.players.some(
-      (player) => player.openId === userInfo.openId
+      (player) => player.openid === userInfo.openid
     );
     if (isExist) {
       return {

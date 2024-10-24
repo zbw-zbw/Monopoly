@@ -36,5 +36,5 @@
 		</block>
 	</view>
 	<!-- 广告位 -->
-	<view class="ad">广告位</view>
+	<!-- <view class="ad">广告位</view> -->
 </view>

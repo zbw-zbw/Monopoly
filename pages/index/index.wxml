@@ -8,7 +8,7 @@
   </view>
   <!-- 开始游戏 -->
   <view class="btn-login">
-    <button wx:if="{{isLogin}}" bindtap="startGame">开始游戏</button>
+    <button wx:if="{{isLogin}}" bindtap="startGame">{{roomId ? '进入房间' : '开始游戏'}}</button>
     <button wx:else bindtap="login">登录游戏</button>
   </view>
   <!-- 房间信息弹窗 -->

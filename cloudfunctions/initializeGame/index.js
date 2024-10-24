@@ -12,7 +12,7 @@ exports.main = async (event) => {
   const { roomId, players } = event;
 
   // 初始化玩家信息
-  const playerData = players.map((player, index) => ({
+  const initPlayers = players.map((player, index) => ({
     ...player,
     money: playerInitMoney,
     ownedPropertiesCount: 0,
@@ -29,10 +29,10 @@ exports.main = async (event) => {
     // 更新房间数据
     await db
       .collection("rooms")
-      .doc(roomId)
+      .where({ roomId })
       .update({
         data: {
-          players: playerData,
+          players: initPlayers,
           currentPlayerIndex: 0,
           gameStarted: true, // 标记游戏开始
         },

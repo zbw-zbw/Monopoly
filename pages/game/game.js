@@ -2,25 +2,20 @@ const unitPrice = 500;
 
 Page({
   data: {
-    canRollDice: true,
-    diceResult: 0,
-    diceImg: "/assets/1.png",
-    diceAnimation: {},
-    board: [],
-    players: [],
-    currentPlayerIndex: 0,
+    canRollDice: false,
+    diceImg: "/assets/dice-1.png",
     chanceEvents: [
       {
         type: "reward",
         amount: unitPrice,
-        message: `你中了彩票，获得 ¥${unitPrice}！`,
+        message: `你中了彩票，获得${unitPrice}元！`,
       },
       {
         type: "penalty",
         amount: unitPrice,
-        message: `你随地扔垃圾，罚款 ¥${unitPrice}！`,
+        message: `你随地扔垃圾，罚款${unitPrice}元！`,
       },
-      { type: "teleport", destination: 0, message: "啊哦，你被传送回了起点！" },
+      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
       {
         type: "item",
         item: "双倍卡",
@@ -29,22 +24,22 @@ Page({
       {
         type: "item",
         item: "控制骰子",
-        message: "运气爆棚，捡到了控制骰子！",
+        message: "你运气爆棚，捡到了控制骰子！",
       },
       {
         type: "item",
         item: "防护罩",
-        message: "运气爆棚，捡到了防护罩！",
+        message: "你运气爆棚，捡到了防护罩！",
       },
     ],
     trapEvents: [
       {
         type: "penalty",
         amount: unitPrice,
-        message: `你随地扔垃圾，罚款 ¥${unitPrice}！`,
+        message: `你随地扔垃圾，罚款${unitPrice}元！`,
       },
       { type: "skip", message: "你掉进了陷阱，跳过下一轮行动！" },
-      { type: "teleport", destination: 0, message: "啊哦，你被传送回了起点！" },
+      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
     ],
     items: [
       {
@@ -65,13 +60,13 @@ Page({
   onLoad(options) {
     const roomId = options.roomId;
     if (roomId) {
-      this.setData({ roomId });
+      this.setData({
+        roomId,
+      });
       this.loadRoomData(roomId);
-      this.watchRoomData(roomId);
-      this.initBoard();
     } else {
       wx.showToast({
-        title: "房间异常，请稍后再试",
+        title: "游戏异常，请稍后再试",
         icon: "none",
       });
       wx.redirectTo({
@@ -92,21 +87,45 @@ Page({
       data: { roomId },
       success: (res) => {
         const { success, data } = res.result;
-        console.log("~getRoomData~, data:", data);
+        console.log("获取房间数据成功:", data);
         if (success) {
           this.setData({
-            players: data.players,
-            currentPlayerIndex: data.currentPlayerIndex,
+            ...this.data,
+            ...data,
           });
+          this.watchRoomData(roomId);
         }
       },
-      fail: (err) => {
-        console.error("获取房间数据失败:", err);
+      fail: (error) => {
+        console.error("获取房间数据失败:", error);
+      },
+    });
+  },
+
+  updateRoomData(data) {
+    const { roomId, currentPlayerIndex } = this.data;
+    wx.cloud.callFunction({
+      name: "updateRoomData",
+      data: {
+        roomId,
+        currentPlayerIndex,
+        ...data,
+      },
+      success: (res) => {
+        if (res.result.success) {
+          console.log("房间数据更新成功:", res.result);
+        } else {
+          console.error("房间数据更新失败:", res.result);
+        }
+      },
+      fail: (error) => {
+        console.error("房间数据更新失败:", error);
       },
     });
   },
 
   watchRoomData(roomId) {
+    const { currentPlayerIndex } = this.data;
     const db = wx.cloud.database();
     this.watcher = db
       .collection("rooms")
@@ -115,100 +134,49 @@ Page({
         onChange: (snapshot) => {
           if (snapshot.docs.length) {
             const roomData = snapshot.docs[0];
-            console.log("roomData update:", roomData);
+            console.log("房间数据已更新:", roomData);
+
+            // 游戏结束
+            if (roomData.gameStatus === "over") {
+              this.onGameOver(roomData);
+            }
+
+            // 提示当前轮到的玩家
+            if (currentPlayerIndex !== roomData.currentPlayerIndex) {
+              this.onChangeCurrentPlayerIndex(roomData);
+            }
+
             this.setData({
-              players: roomData.players,
-              currentPlayerIndex: roomData.currentPlayerIndex,
+              ...this.data,
+              ...roomData,
             });
           }
         },
-        onError: (err) => {
-          console.error("实时数据订阅失败:", err);
+        onError: (error) => {
+          console.error("房间实时数据订阅失败:", error);
         },
       });
   },
 
-  initBoard() {
-    const board = [];
-    const totalTiles = 40;
-
-    for (let i = 0; i < totalTiles; i++) {
-      let tile = {
-        x: 0,
-        y: 0,
-        type: "property",
-        price: 0,
-        bgColor: "#ffffff",
-        level: 0,
-      };
-
-      switch (true) {
-        case i === 0:
-          tile.name = "起点";
-          tile.type = "start"; // 起点
-          tile.bgColor = "#02ffd0";
-          tile.price = 1000;
-          break;
-        case i % 6 === 0:
-          tile.name = "商店";
-          tile.type = "shop"; // 商店
-          tile.bgColor = "#881280";
-          break;
-        case i % 7 === 0:
-          tile.name = "机会";
-          tile.type = "chance"; // 机会卡
-          tile.bgColor = "#808002";
-          break;
-        case i % 8 === 0:
-          tile.name = "陷阱";
-          tile.type = "trap"; // 陷阱
-          tile.bgColor = "#1a1aa6";
-          break;
-        default:
-          tile.price = unitPrice; // 空地
-          break;
-      }
-
-      // 设置坐标
-      const gridSize = 30;
-      if (i < 10) {
-        tile.x = i * gridSize;
-        tile.y = 0;
-      } else if (i < 20) {
-        tile.x = 9 * gridSize;
-        tile.y = (i - 10) * gridSize;
-      } else if (i < 30) {
-        tile.x = (9 - (i - 20)) * gridSize;
-        tile.y = 9 * gridSize;
-      } else {
-        tile.x = 0;
-        tile.y = (9 - (i - 30)) * gridSize;
-      }
-
-      // 避免在拐角位置渲染重复的格子
-      if (i > 0 && ((i % 10 === 0 && i < 40) || (i % 10 === 9 && i >= 30))) {
-        continue;
-      }
-
-      board.push(tile);
-    }
-
-    this.setData({ board });
-  },
-
   rollDice() {
     const { canRollDice } = this.data;
-    if (!canRollDice) return;
+    if (!canRollDice) {
+      wx.showToast({
+        title: "现在不是你的回合！",
+        icon: "none",
+      });
+      return;
+    }
 
     this.setData({
       canRollDice: false,
-      diceImg: "/assets/x.gif",
+      diceImg: "/assets/roll-dice.gif",
     });
 
     const rollDiceTimer = setTimeout(() => {
       clearTimeout(rollDiceTimer);
       const diceResult = Math.floor(Math.random() * 6) + 1;
-      const diceImg = `/assets/${diceResult}.png`;
+      const diceImg = `/assets/dice-${diceResult}.png`;
       this.setData({
         diceResult,
         diceImg,
@@ -270,46 +238,8 @@ Page({
     }, duration);
   },
 
-  nextPlayer() {
-    const { players, currentPlayerIndex } = this.data;
-    let nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-
-    // 查找下一个可以行动的玩家
-    while (players[nextPlayerIndex].skipNextTurn) {
-      players[nextPlayerIndex].skipNextTurn = false;
-      nextPlayerIndex = (nextPlayerIndex + 1) % players.length;
-    }
-
-    this.updateRoomData({
-      currentPlayerIndex: nextPlayerIndex,
-      players,
-    });
-  },
-
-  updateRoomData(data) {
-    const { roomId } = this.data;
-    wx.cloud.callFunction({
-      name: "updateRoomData",
-      data: {
-        roomId,
-        ...data,
-      },
-      success: (res) => {
-        console.log("updateRoomData:", res.result);
-        this.setData({
-          ...this.data,
-          ...res.result,
-          canRollDice: true,
-        });
-      },
-      fail: (error) => {
-        console.error("updateRoomData error:", error);
-      },
-    });
-  },
-
   handleTileEvent(player, tile) {
-    const { players, board, chanceEvents, trapEvents } = this.data;
+    const { chanceEvents, trapEvents } = this.data;
     switch (tile.type) {
       case "start":
         this.handleStartEvent(player, tile);
@@ -328,22 +258,19 @@ Page({
       default:
         break;
     }
-
-    // this.setData({
-    //   board,
-    //   players,
-    // });
   },
 
   handleStartEvent(player, tile) {
     const { players } = this.data;
     wx.showToast({
-      title: `${player.name} 经过了起点，获得￥${tile.price}补贴`,
+      title: `${player.name} 经过了起点，获得${tile.price}元补贴`,
       icon: "none",
     });
     player.money += tile.price;
-    this.setData({ players });
-    this.nextPlayer();
+    this.updateRoomData({
+      players,
+      isUpdateCurrentIndex: true,
+    });
   },
 
   handlePropertyEvent(player, tile) {
@@ -352,13 +279,13 @@ Page({
       // 经过空地 可占领
       case !tile.owner:
         wx.showModal({
-          content: `你要占领此空地吗？价格为 ¥${tile.price}`,
+          content: `你要占领此空地吗？需花费：${tile.price}元`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= tile.price) {
                 player.money -= tile.price;
                 tile.owner = player.id;
-                tile.bgColor = player.bgColor;
+                tile.bgColor = player.primaryColor;
                 tile.level = 1;
                 player.ownedPropertiesCount += 1;
               } else {
@@ -367,12 +294,14 @@ Page({
                   icon: "none",
                 });
               }
-              this.checkGameOver(players);
-              this.setData({ players, board });
             }
           },
           complete: () => {
-            this.nextPlayer();
+            this.updateRoomData({
+              players,
+              board,
+              isUpdateCurrentIndex: true,
+            });
           },
         });
         break;
@@ -380,7 +309,7 @@ Page({
       case tile.owner === player.id:
         const upgradeCost = tile.level * tile.price;
         wx.showModal({
-          content: `你要升级此空地吗？当前等级: ${tile.level}，升级费用: ¥${upgradeCost}`,
+          content: `你要升级此领地吗？需花费: ${upgradeCost}元`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= upgradeCost) {
@@ -403,11 +332,13 @@ Page({
                   icon: "none",
                 });
               }
-              this.setData({ players, board });
             }
           },
           complete: () => {
-            this.nextPlayer();
+            this.updateRoomData({
+              players,
+              board,
+            });
           },
         });
         break;
@@ -420,14 +351,16 @@ Page({
           const owner = players.find((p) => p.id === tile.owner);
           owner.money += toll;
           wx.showToast({
-            title: `${player.name} 支付了 ¥${toll} 过路费给 ${owner.name}`,
+            title: `${player.name} 支付了 ${toll} 元过路费给 ${owner.name}`,
             icon: "none",
           });
-          this.checkGameOver(players);
-          this.setData({ players, board });
         }
 
-        this.nextPlayer();
+        this.updateRoomData({
+          players,
+          board,
+          isUpdateCurrentIndex: true,
+        });
         break;
     }
   },
@@ -435,7 +368,10 @@ Page({
   handleChanceEvent(player, chanceEvents) {
     const { players } = this.data;
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
-    wx.showToast({ title: event.message, icon: "none" });
+    wx.showToast({
+      title: event.message,
+      icon: "none",
+    });
     switch (event.type) {
       case "reward":
         player.money += event.amount;
@@ -451,9 +387,10 @@ Page({
         this.addItem(player, event.item);
         break;
     }
-    this.checkGameOver(players);
-    this.setData({ players });
-    this.nextPlayer();
+    this.updateRoomData({
+      players,
+      isUpdateCurrentIndex: true,
+    });
   },
 
   handleTrapEvent(player, trapEvents) {
@@ -472,14 +409,15 @@ Page({
         player.position = event.destination;
         break;
     }
-    this.setData({ players });
-    this.checkGameOver(players);
-    this.nextPlayer();
+    this.updateRoomData({
+      players,
+      isUpdateCurrentIndex: true,
+    });
   },
 
   handleShopEvent(player) {
     const { players, items } = this.data;
-    const itemList = items.map(({ name, price }) => `购买${name}(￥${price})`);
+    const itemList = items.map(({ name, price }) => `购买${name}（${price}元)`);
     wx.showActionSheet({
       itemList,
       success: (res) => {
@@ -488,18 +426,25 @@ Page({
         if (player.money >= price) {
           this.addItem(player, name);
           player.money -= price;
-          wx.showToast({ title: `成功购买${name}！`, icon: "none" });
+          wx.showToast({
+            title: `成功购买${name}！`,
+            icon: "none",
+          });
         } else {
-          wx.showToast({ title: "资产不足！", icon: "none" });
+          wx.showToast({
+            title: "资产不足！",
+            icon: "none",
+          });
         }
-        this.checkGameOver(players);
-        this.setData({ players });
       },
       fail: (error) => {
         console.warn("购买失败:", error);
       },
       complete: () => {
-        this.nextPlayer();
+        this.updateRoomData({
+          players,
+          isUpdateCurrentIndex: true,
+        });
       },
     });
   },
@@ -509,7 +454,10 @@ Page({
     if (itemData) {
       itemData.count += 1;
     } else {
-      player.items.push({ name, count: 1 });
+      player.items.push({
+        name,
+        count: 1,
+      });
     }
   },
 
@@ -526,30 +474,47 @@ Page({
         player.items.splice(itemIndex, 1);
       }
     } else {
-      wx.showToast({ title: "未找到道具", icon: "none" });
+      wx.showToast({
+        title: "未找到道具",
+        icon: "none",
+      });
     }
 
     switch (item.name) {
       case "双倍卡":
-        currentPlayer.doubleCardActive = true;
-        wx.showToast({ title: "双倍卡已激活！", icon: "none" });
+        player.doubleCardActive = true;
+        wx.showToast({
+          title: "双倍卡已激活！",
+          icon: "none",
+        });
+        this.updateRoomData({
+          players,
+        });
         break;
       case "控制骰子":
         wx.showActionSheet({
           itemList: ["1", "2", "3", "4", "5", "6"],
           success: (res) => {
             const chosenNumber = parseInt(res.tapIndex) + 1;
-            this.setData({ diceResult: chosenNumber });
             this.movePlayer(chosenNumber);
+            this.updateRoomData({
+              diceResult: chosenNumber,
+              players,
+            });
           },
         });
         break;
       case "防护罩":
-        currentPlayer.shieldActive = true;
-        wx.showToast({ title: "防护罩已激活！", icon: "none" });
+        player.shieldActive = true;
+        wx.showToast({
+          title: "防护罩已激活！",
+          icon: "none",
+        });
+        this.updateRoomData({
+          players,
+        });
         break;
     }
-    this.setData({ players });
   },
 
   checkShieldActive(player) {
@@ -562,43 +527,30 @@ Page({
     return false;
   },
 
-  checkPlayerBankrupt(player) {
-    const { players } = this.data;
-
-    if (player.money < 0) {
-      // 已破产的不弹提示
-      if (player.isBankrupt) return true;
-
+  onChangeCurrentPlayerIndex(roomData) {
+    const currentPlayer = roomData.players[roomData.currentPlayerIndex];
+    const userInfo = JSON.parse(wx.getStorageSync("userInfo"));
+    const isMyTurn = currentPlayer.openid === userInfo.openid;
+    if (isMyTurn) {
       wx.showToast({
-        title: `${player.name} 破产了！`,
+        title: `现在轮到你的回合！`,
         icon: "none",
       });
-      player.isBankrupt = true;
-      this.setData({ players });
-
-      return true;
-    }
-
-    return false;
-  },
-
-  checkGameOver(players) {
-    const remainingPlayers = players.filter(
-      (player) => !this.checkPlayerBankrupt(player)
-    );
-
-    // 如果只剩一名玩家没有破产，则游戏结束
-    if (remainingPlayers.length <= 1) {
-      const winner = remainingPlayers[0];
-      wx.showModal({
-        title: "游戏结束",
-        content: `${winner.name} 获得胜利！`,
-        showCancel: false,
-        success: () => {
-          this.resetGame();
-        },
+      this.setData({
+        canRollDice: true,
       });
     }
+  },
+
+  onGameOver(roomData) {
+    wx.showModal({
+      title: "游戏结束",
+      content: `恭喜 ${roomData.winner.name} 胜利！`,
+      showCancel: false,
+      success: () => {
+        this.resetGame();
+      },
+    });
   },
 
   resetGame() {

@@ -16,6 +16,7 @@ exports.main = async (event) => {
     roomId,
     host: userInfo,
     players: [userInfo],
+    gameStatus: "ready",
   };
 
   // 检查房间是否已存在

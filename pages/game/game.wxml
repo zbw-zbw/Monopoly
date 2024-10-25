@@ -4,7 +4,7 @@
 		<block wx:for="{{players}}" wx:for-item="player" wx:key="index">
 			<view class="player-info" style="background-color: {{player.primaryColor}};">
 				<view class="player-user">
-					<view class="player-avatar" style="background-image: url('{{player.avatarUrl}}');"></view>
+					<image class="player-avatar" src="{{player.avatarUrl}}" />
 					<view class="player-name-status">
 						<view class="player-name">{{player.nickName}}</view>
 						<view class="player-status">{{player.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : ''}}</view>
@@ -31,7 +31,8 @@
 		</block>
 		<!-- 玩家位置标识 -->
 		<block wx:for="{{players}}" wx:key="index">
-			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x + 3}}px; top: {{board[item.position].y +3}}px; background-color: {{item.primaryColor}}; background-image: url('{{item.avatarUrl}}'); border: 2px solid {{item.primaryColor}};" animation="{{playerAnimation}}">
+			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
+				<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
 			</view>
 		</block>
 	</view>

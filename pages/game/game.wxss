@@ -108,16 +108,18 @@
 
 .player-marker {
   position: absolute;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-size: 100% 100%;
-  background-position: center center;
-  background-repeat: no-repeat;
   transition: all 0.5s ease;
+}
+
+.player-marker .marker-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
 }
 
 .ad {

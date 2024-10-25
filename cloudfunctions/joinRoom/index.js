@@ -37,7 +37,9 @@ exports.main = async (event) => {
       .collection("rooms")
       .doc(room._id)
       .update({
-        data: { players: updatedPlayers },
+        data: {
+          players: updatedPlayers,
+        },
       });
 
     return {

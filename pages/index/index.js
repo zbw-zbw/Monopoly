@@ -168,10 +168,11 @@ Page({
   },
 
   createRoom() {
+    const { userInfo } = this.data;
     wx.cloud.callFunction({
       name: "createRoom",
       data: {
-        userInfo: this.data.userInfo,
+        userInfo,
       },
       success: (res) => {
         wx.showToast({
@@ -195,12 +196,12 @@ Page({
   },
 
   joinRoom(roomId) {
-    console.log("userInfo", this.data.userInfo);
+    const { userInfo } = this.data;
     wx.cloud.callFunction({
       name: "joinRoom",
       data: {
         roomId,
-        userInfo: this.data.userInfo,
+        userInfo,
       },
       success: (res) => {
         const { success, message, players } = res.result;
@@ -267,7 +268,8 @@ Page({
   },
 
   updatePlayerSlots(players) {
-    return this.data.playerSlots.map(
+    const { playerSlots } = this.data;
+    return playerSlots.map(
       (_playerSlot, index) => players[index] || { avatarUrl: "", nickName: "" }
     );
   },

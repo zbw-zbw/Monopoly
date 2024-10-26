@@ -14,11 +14,13 @@ const initBoard = () => {
 
   for (let i = 0; i < totalTiles; i++) {
     let tile = {
+      id: i,
       x: 0,
       y: 0,
       type: "property",
-      price: 0,
       bgColor: "#ffffff",
+      price: 0,
+      owner: null,
       level: 0,
     };
     switch (true) {
@@ -74,30 +76,28 @@ const initBoard = () => {
 };
 
 exports.main = async (event) => {
-  const { roomId, players } = event;
-
-  // 初始化玩家信息
-  const initPlayers = players.map((player, index) => ({
-    ...player,
-    money: playerInitMoney,
-    ownedPropertiesCount: 0,
-    position: 0,
-    primaryColor: primaryColor[index],
-    items: [],
-    doubleCardActive: false,
-    shieldActive: false,
-    skipNextTurn: false,
-    isBankrupt: false,
-  }));
-
   try {
-    // 更新房间数据
+    const { roomId, players } = event;
+    const initPlayers = players.map((player, index) => ({
+      ...player,
+      money: playerInitMoney,
+      ownedPropertiesCount: 0,
+      position: 0,
+      primaryColor: primaryColor[index],
+      items: [],
+      doubleCardActive: false,
+      shieldActive: false,
+      skipNextTurn: false,
+      isBankrupt: false,
+    }));
     await db
       .collection("rooms")
-      .where({ roomId })
+      .where({
+        roomId,
+      })
       .update({
         data: {
-          gameStatus: "started",
+          gameStatus: "IN_PROGRESS",
           players: initPlayers,
           currentPlayerIndex: 0,
           board: initBoard(),
@@ -106,12 +106,13 @@ exports.main = async (event) => {
 
     return {
       success: true,
-      message: "玩家信息初始化成功",
+      message: "游戏初始化成功",
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message,
+      message: "游戏初始化失败",
+      error,
     };
   }
 };

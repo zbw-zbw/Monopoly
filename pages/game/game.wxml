@@ -12,11 +12,6 @@
 				</view>
 				<view class="player-money">资产：¥{{player.money}}</view>
 				<view class="player-tile-count">领地：{{player.ownedPropertiesCount}}</view>
-				<view class="player-items-wrap">
-					<view class="player-items" wx:for="{{player.items}}" wx:for-item="item" wx:key="name">
-						<text bindtap="useItem" data-item="{{item}}" data-index="{{index}}">{{item.name}} x{{item.count}}</text>
-					</view>
-				</view>
 			</view>
 		</block>
 	</view>
@@ -35,6 +30,16 @@
 				<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
 			</view>
 		</block>
+	</view>
+
+	<view class="player-items-wrap">
+		<view class="player-items-content" wx:if="{{myPlayerData.items.length > 0}}">
+			<view class="player-item" wx:for="{{myPlayerData.items}}" wx:for-item="item" wx:key="name">
+				<text class="item-name">{{item.name}} x{{item.count}}</text>
+				<button class="use-item" type="primary" disabled="{{!canRollDice}}" bindtap="useItem" data-item="{{item}}" data-index="{{index}}">使用</button>
+			</view>
+		</view>
+		<text wx:else>暂无道具</text>
 	</view>
 	<!-- 广告位 -->
 	<!-- <view class="ad">广告位</view> -->

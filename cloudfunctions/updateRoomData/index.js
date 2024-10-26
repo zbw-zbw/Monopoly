@@ -30,46 +30,51 @@ const checkGameOver = (players) => {
     (player) => !checkPlayerBankrupt(player)
   );
 
-  // 如果只剩一名玩家没有破产，则游戏结束
   if (remainingPlayers.length <= 1) {
     const winner = remainingPlayers[0];
 
-    return {
-      gameStatus: "over",
-      winner,
-    };
+    return winner;
   }
 
-  return {};
+  return null;
 };
 
 exports.main = async (event) => {
-  const { roomId, isUpdateCurrentIndex = false, ...data } = event;
-  const { players, currentPlayerIndex } = data;
-  const updateData = data;
+  try {
+    const { roomId, isUpdateCurrentIndex = false, ...data } = event;
+    const { players, currentPlayerIndex } = data;
+    const updateData = data;
 
-  if (isUpdateCurrentIndex) {
-    const nextPlayerIndex = getNextPlayerIndex(currentPlayerIndex, players);
-    updateData.currentPlayerIndex = nextPlayerIndex;
+    if (isUpdateCurrentIndex) {
+      const nextPlayerIndex = getNextPlayerIndex(currentPlayerIndex, players);
+      updateData.currentPlayerIndex = nextPlayerIndex;
+    }
+
+    const winner = checkGameOver(players);
+    if (winner) {
+      updateData.gameStatus = "OVER";
+      updateData.winner = winner;
+    }
+
+    await db
+      .collection("rooms")
+      .where({
+        roomId,
+      })
+      .update({
+        data: updateData,
+      });
+
+    return {
+      success: true,
+      message: "更新房间数据成功",
+    };
+  } catch (error) {
+    console.log("更新房间数据失败，error:", error);
+
+    return {
+      success: false,
+      message: "更新房间数据失败",
+    };
   }
-
-  const { gameStatus, winner } = checkGameOver(players);
-  if (winner) {
-    updateData.gameStatus = gameStatus;
-    updateData.winner = winner;
-  }
-
-  await db
-    .collection("rooms")
-    .where({
-      roomId,
-    })
-    .update({
-      data: updateData,
-    });
-
-  return {
-    success: true,
-    data,
-  };
 };

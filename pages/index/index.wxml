@@ -1,15 +1,19 @@
 <view class="page page-index">
   <view class="login-user-info" wx:if="{{isLogin}}">
+    <view class="page-title">点击头像或昵称可修改</view>
     <!-- 用户信息 -->
     <button open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" class="avatar-wrapper">
       <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
     </button>
     <input type="nickname" class="nickname" value="{{userInfo.nickName}}" placeholder="请输入昵称" bindblur="onChangeNickName" />
   </view>
+  <view class="page-title" wx:else>
+    大富翁之我不是牛马
+  </view>
   <!-- 开始游戏 -->
   <view class="btn-login">
-    <button wx:if="{{isLogin}}" bindtap="startGame">{{roomId ? '进入房间' : '开始游戏'}}</button>
-    <button wx:else bindtap="login">登录游戏</button>
+    <button wx:if="{{isLogin}}" type="primary" bindtap="startGame">{{roomId ? '进入房间' : '开始游戏'}}</button>
+    <button wx:else type="primary" bindtap="login">登录游戏</button>
   </view>
   <!-- 房间信息弹窗 -->
   <modal class="room-modal" wx:if="{{isModalVisible}}">
@@ -18,8 +22,13 @@
       <text class="room-id">房间名称: {{roomId}}</text>
       <view class="players">
         <view class="player" wx:for="{{playerSlots}}" wx:key="index">
-          <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"></image>
-          <button wx:else class="avatar" open-type="share" data-index="{{index}}">+</button>
+          <view class="avatar-wrap">
+            <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill">
+            </image>
+            <button wx:else class="avatar" open-type="share" data-index="{{index}}">
+              <text>+</text></button>
+            <view wx:if="{{item.isHost}}" class="room-host"></view>
+          </view>
           <text class="nickname">{{item.nickName}}</text>
         </view>
       </view>

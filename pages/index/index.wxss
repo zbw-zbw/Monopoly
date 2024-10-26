@@ -2,6 +2,13 @@
   position: relative;
 }
 
+.page-title {
+  font-size: 20px;
+  margin-bottom: 40px;
+  font-weight: bold;
+  text-align: center;
+}
+
 .login-tips,
 .user-info-tips {
   margin-bottom: 20px;
@@ -96,12 +103,30 @@
   margin-right: 0;
 }
 
-.players .player .avatar {
+.players .player .avatar-wrap {
+  position: relative;
   width: 60px;
   height: 60px;
-  padding: 0;
-  border-radius: 50%;
   margin-bottom: 5px;
+  border-radius: 50%;
+  border: 1px solid #ffd400;
+}
+
+.players .player .avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.players .player .room-host {
+  position: absolute;
+  top: -4px;
+  left: -6px;
+  transform: rotate(-10deg);
+  width: 24px;
+  height: 24px;
+  background: url("/assets/icon-room-host.png") center center / 100% 100%
+    no-repeat;
 }
 
 .players .player .nickname {
@@ -110,9 +135,8 @@
 }
 
 .btn-enter-game {
-  margin-top: 20px;
   padding: 10px 20px;
-  background-color: #f39c12;
+  background-color: #e2821e;
   color: white;
   border: none;
   border-radius: 5px;

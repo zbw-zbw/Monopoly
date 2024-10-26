@@ -5,14 +5,18 @@ Page({
   data: {
     isLogin: false,
     userInfo: {
-      openid: "",
+      openId: "",
       avatarUrl: defaultAvatarUrl,
       nickName: "",
     },
     roomId: "",
     isModalVisible: false,
+    host: {},
     players: [],
-    playerSlots: Array(4).fill({ avatarUrl: "", nickName: "" }),
+    playerSlots: Array(4).fill({
+      avatarUrl: "",
+      nickName: "",
+    }),
   },
 
   onLoad(options) {
@@ -21,7 +25,7 @@ Page({
         roomId: options.roomId,
       });
     }
-    this.initUserInfo();
+    this.initialUserInfo();
   },
 
   onUnload() {
@@ -49,7 +53,7 @@ Page({
     };
   },
 
-  initUserInfo() {
+  initialUserInfo() {
     const cacheUserInfo = wx.getStorageSync("userInfo");
     if (cacheUserInfo) {
       this.setData({
@@ -69,8 +73,10 @@ Page({
           title: "登录成功",
           icon: "none",
         });
-        const { openid } = res.result;
-        this.updateUserInfo({ openid });
+        const { openId } = res.result;
+        this.updateUserInfo({
+          openId,
+        });
       },
       fail: (error) => {
         console.error("登录失败:", error);
@@ -81,7 +87,7 @@ Page({
   onChooseAvatar(e) {
     const { avatarUrl } = e.detail;
     const { userInfo } = this.data;
-    const cloudPath = `avatars/${userInfo.openid}_${Date.now()}.png`;
+    const cloudPath = `avatars/${userInfo.openId}_${Date.now()}.png`;
     wx.cloud.uploadFile({
       cloudPath,
       filePath: avatarUrl,
@@ -91,7 +97,7 @@ Page({
           avatarUrl: fileID,
         });
         wx.showToast({
-          title: "头像上传成功",
+          title: "头像已更新",
           icon: "none",
         });
       },
@@ -115,7 +121,7 @@ Page({
         nickName,
       });
       wx.showToast({
-        title: "昵称修改成功",
+        title: "昵称已更新",
         icon: "none",
       });
     } else {
@@ -140,7 +146,11 @@ Page({
       name: "updateUser",
       data: userInfo,
       success: (res) => {
-        console.log("更新用户信息成功:", res.result);
+        if (res.result.success) {
+          console.log("更新用户信息成功:", res.result);
+        } else {
+          console.error("更新用户信息失败:", res.result);
+        }
       },
       fail: (error) => {
         console.error("更新用户信息失败:", error);
@@ -152,12 +162,12 @@ Page({
     const { userInfo, roomId } = this.data;
     if (userInfo.avatarUrl === defaultAvatarUrl) {
       wx.showToast({
-        title: "请设置头像",
+        title: "请先设置头像",
         icon: "none",
       });
     } else if (!userInfo.nickName) {
       wx.showToast({
-        title: "请设置昵称",
+        title: "请先设置昵称",
         icon: "none",
       });
     } else if (roomId) {
@@ -172,22 +182,23 @@ Page({
     wx.cloud.callFunction({
       name: "createRoom",
       data: {
-        userInfo,
+        user: userInfo,
       },
       success: (res) => {
-        wx.showToast({
-          title: "创建房间成功",
-          icon: "none",
-        });
-        const { roomId, players } = res.result;
-        const playerSlots = this.updatePlayerSlots(players);
-        this.setData({
-          roomId,
-          players,
-          playerSlots,
-        });
-        this.showRoomModal();
-        this.watchRoom(roomId);
+        const { success, data } = res.result;
+        if (success) {
+          wx.showToast({
+            title: "创建房间成功",
+            icon: "none",
+          });
+          this.watchRoom(data.roomId);
+        } else {
+          wx.showToast({
+            title: "创建房间失败",
+            icon: "none",
+          });
+          console.error("创建房间失败:", res.result);
+        }
       },
       fail: (error) => {
         console.error("创建房间失败:", error);
@@ -201,22 +212,15 @@ Page({
       name: "joinRoom",
       data: {
         roomId,
-        userInfo,
+        user: userInfo,
       },
       success: (res) => {
-        const { success, message, players } = res.result;
+        const { success, message } = res.result;
         if (success) {
           wx.showToast({
             title: message || "加入房间成功",
             icon: "none",
           });
-          const playerSlots = this.updatePlayerSlots(players);
-          this.setData({
-            roomId,
-            players,
-            playerSlots,
-          });
-          this.showRoomModal();
           this.watchRoom(roomId);
         } else {
           wx.showToast({
@@ -240,17 +244,25 @@ Page({
     const db = wx.cloud.database();
     this.watcher = db
       .collection("rooms")
-      .where({ roomId })
+      .where({
+        roomId,
+      })
       .watch({
         onChange: (snapshot) => {
-          console.log("~ watchRoom ~ snapshot", snapshot);
+          console.log("监听到房间玩家数据更新：", snapshot);
           if (snapshot.docs.length > 0) {
-            const players = snapshot.docs[0].players;
-            const playerSlots = this.updatePlayerSlots(players);
+            const roomData = snapshot.docs[0];
+            const playerSlots = this.updatePlayerSlots(roomData.players);
             this.setData({
-              players,
+              ...roomData,
               playerSlots,
             });
+
+            if (roomData.gameStatus === "IN_PROGRESS") {
+              this.openGamePage(roomId);
+            } else {
+              this.showRoomModal();
+            }
           }
         },
         onError: (error) => {
@@ -260,11 +272,15 @@ Page({
   },
 
   showRoomModal() {
-    this.setData({ isModalVisible: true });
+    this.setData({
+      isModalVisible: true,
+    });
   },
 
   closeRoomModal() {
-    this.setData({ isModalVisible: false });
+    this.setData({
+      isModalVisible: false,
+    });
   },
 
   updatePlayerSlots(players) {
@@ -275,9 +291,17 @@ Page({
   },
 
   enterGame() {
-    const { players } = this.data;
-    if (players.length > 1) {
+    const { host, userInfo, players } = this.data;
+    const isHost = host.openId === userInfo.openId;
+    console.log(host, userInfo);
+
+    if (isHost && players.length > 1) {
       this.initializeGame();
+    } else if (!isHost) {
+      wx.showToast({
+        title: "只有房主可以开始游戏",
+        icon: "none",
+      });
     } else {
       wx.showToast({
         title: "至少需要 2 位玩家才能开始游戏",
@@ -287,7 +311,7 @@ Page({
   },
 
   initializeGame() {
-    const { players, roomId } = this.data;
+    const { roomId, players } = this.data;
     wx.cloud.callFunction({
       name: "initializeGame",
       data: {
@@ -296,9 +320,7 @@ Page({
       },
       success: (res) => {
         if (res.result.success) {
-          wx.navigateTo({
-            url: `/pages/game/game?roomId=${roomId}`,
-          });
+          console.log("初始化游戏成功:", res.result);
         } else {
           wx.showToast({
             title: "初始化游戏失败",
@@ -313,5 +335,14 @@ Page({
         console.error("初始化游戏失败:", error);
       },
     });
+  },
+
+  openGamePage(roomId) {
+    wx.navigateTo({
+      url: `/pages/game/game?roomId=${roomId}`,
+    });
+    if (this.watcher) {
+      this.watcher.close();
+    }
   },
 });

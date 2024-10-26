@@ -54,11 +54,6 @@
   color: #fff;
 }
 
-.player-items,
-.player-items-empty {
-  color: #fff;
-}
-
 .game-board {
   position: absolute;
   top: 50%;
@@ -120,6 +115,33 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
+}
+
+.player-items-wrap {
+  position: absolute;
+  bottom: 70px;
+}
+
+.player-item {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.player-item:last-child {
+  margin-bottom: 0;
+}
+
+.player-item .item-name {
+  flex: 1;
+}
+
+.player-item .use-item {
+  width: 60px;
+  margin-left: 20px;
+  padding: 4px;
+  font-size: 14px;
 }
 
 .ad {

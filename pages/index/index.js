@@ -17,6 +17,7 @@ Page({
       avatarUrl: "",
       nickName: "",
     }),
+    gameStatus: "NOT_START",
   },
 
   onLoad(options) {
@@ -44,7 +45,7 @@ Page({
       return;
     }
 
-    console.log("onShareAppMessage roomId:", roomId);
+    console.log("onShareAppMessage, roomId:", roomId);
 
     return {
       title: "快来和我一起开心摸鱼吧！",
@@ -74,12 +75,17 @@ Page({
           icon: "none",
         });
         const { openId } = res.result;
+        console.log("login success:", res.result);
         this.updateUserInfo({
           openId,
         });
       },
       fail: (error) => {
-        console.error("登录失败:", error);
+        wx.showToast({
+          title: "登录失败",
+          icon: "none",
+        });
+        console.error("login fail:", error);
       },
     });
   },
@@ -92,21 +98,22 @@ Page({
       cloudPath,
       filePath: avatarUrl,
       success: (res) => {
-        const { fileID } = res;
-        this.updateUserInfo({
-          avatarUrl: fileID,
-        });
         wx.showToast({
           title: "头像已更新",
           icon: "none",
         });
+        const { fileID } = res;
+        this.updateUserInfo({
+          avatarUrl: fileID,
+        });
+        console.log("uploadFile success:", fileID);
       },
       fail: (err) => {
-        console.error("头像上传失败:", err);
         wx.showToast({
           title: "头像上传失败",
           icon: "none",
         });
+        console.error("uploadFile fail:", err);
       },
     });
   },
@@ -147,13 +154,13 @@ Page({
       data: userInfo,
       success: (res) => {
         if (res.result.success) {
-          console.log("更新用户信息成功:", res.result);
+          console.log("updateUserInfo success:", res.result);
         } else {
-          console.error("更新用户信息失败:", res.result);
+          console.error("updateUserInfo error:", res.result);
         }
       },
       fail: (error) => {
-        console.error("更新用户信息失败:", error);
+        console.error("updateUserInfo fail:", error);
       },
     });
   },
@@ -192,16 +199,17 @@ Page({
             icon: "none",
           });
           this.watchRoom(data.roomId);
+          console.log("createRoom success:", res.result);
         } else {
           wx.showToast({
             title: "创建房间失败",
             icon: "none",
           });
-          console.error("创建房间失败:", res.result);
+          console.error("createRoom error:", res.result);
         }
       },
       fail: (error) => {
-        console.error("创建房间失败:", error);
+        console.error("createRoom fail:", error);
       },
     });
   },
@@ -222,12 +230,13 @@ Page({
             icon: "none",
           });
           this.watchRoom(roomId);
+          console.log("joinRoom success:", res.result);
         } else {
           wx.showToast({
             title: message || "加入房间失败",
             icon: "none",
           });
-          console.error("加入房间失败:", message);
+          console.error("joinRoom error:", message);
         }
       },
       fail: (error) => {
@@ -235,7 +244,7 @@ Page({
           title: "加入房间失败",
           icon: "none",
         });
-        console.error("加入房间失败:", error);
+        console.error("joinRoom fail:", error);
       },
     });
   },
@@ -249,16 +258,18 @@ Page({
       })
       .watch({
         onChange: (snapshot) => {
-          console.log("监听到房间玩家数据更新：", snapshot);
           if (snapshot.docs.length > 0) {
-            const roomData = snapshot.docs[0];
-            const playerSlots = this.updatePlayerSlots(roomData.players);
+            console.log("watchRoom update:", snapshot.docs[0]);
+            const { roomId, host, players, gameStatus } = snapshot.docs[0];
+            const playerSlots = this.updatePlayerSlots(players);
             this.setData({
-              ...roomData,
+              roomId,
+              host,
+              players,
               playerSlots,
             });
 
-            if (roomData.gameStatus === "IN_PROGRESS") {
+            if (gameStatus === "IN_PROGRESS") {
               this.openGamePage(roomId);
             } else {
               this.showRoomModal();
@@ -266,7 +277,7 @@ Page({
           }
         },
         onError: (error) => {
-          console.error("the watch closed because of error:", error);
+          console.error("watchRoom error:", error);
         },
       });
   },
@@ -293,7 +304,6 @@ Page({
   enterGame() {
     const { host, userInfo, players } = this.data;
     const isHost = host.openId === userInfo.openId;
-    console.log(host, userInfo);
 
     if (isHost && players.length > 1) {
       this.initializeGame();
@@ -320,19 +330,21 @@ Page({
       },
       success: (res) => {
         if (res.result.success) {
-          console.log("初始化游戏成功:", res.result);
+          console.log("initializeGame success:", res.result);
         } else {
           wx.showToast({
-            title: "初始化游戏失败",
+            title: "游戏加载失败",
+            icon: "none",
           });
-          console.error("初始化游戏失败:", res.result);
+          console.error("initializeGame error:", res.result);
         }
       },
       fail: (error) => {
         wx.showToast({
-          title: "初始化游戏失败",
+          title: "游戏加载失败",
+          icon: "none",
         });
-        console.error("初始化游戏失败:", error);
+        console.error("initializeGame fail:", error);
       },
     });
   },

@@ -41,19 +41,23 @@ const checkGameOver = (players) => {
 
 exports.main = async (event) => {
   try {
-    const { roomId, isUpdateCurrentIndex = false, ...data } = event;
-    const { players, currentPlayerIndex } = data;
-    const updateData = data;
+    const { roomId, roomData } = event;
+    const {
+      players,
+      currentPlayerIndex,
+      isUpdateCurrentIndex = false,
+    } = roomData;
+    const data = { ...roomData };
 
     if (isUpdateCurrentIndex) {
       const nextPlayerIndex = getNextPlayerIndex(currentPlayerIndex, players);
-      updateData.currentPlayerIndex = nextPlayerIndex;
+      data.currentPlayerIndex = nextPlayerIndex;
     }
 
     const winner = checkGameOver(players);
     if (winner) {
-      updateData.gameStatus = "OVER";
-      updateData.winner = winner;
+      data.gameStatus = "OVER";
+      data.winner = winner;
     }
 
     await db
@@ -62,7 +66,7 @@ exports.main = async (event) => {
         roomId,
       })
       .update({
-        data: updateData,
+        data,
       });
 
     return {

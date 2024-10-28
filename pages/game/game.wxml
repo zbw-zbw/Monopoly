@@ -1,5 +1,4 @@
 <view class="page page-game">
-	<!-- 玩家信息 -->
 	<view class="players-info">
 		<block wx:for="{{players}}" wx:for-item="player" wx:key="index">
 			<view class="player-info" style="background-color: {{player.primaryColor}};">
@@ -10,28 +9,25 @@
 						<view class="player-status">{{player.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : ''}}</view>
 					</view>
 				</view>
-				<view class="player-money">资产：¥{{player.money}}</view>
+				<view class="player-money">资产：{{player.money}}元</view>
 				<view class="player-tile-count">领地：{{player.ownedPropertiesCount}}</view>
 			</view>
 		</block>
 	</view>
-	<!-- 地图 -->
 	<view class="game-board">
-		<!-- 掷骰子按钮 -->
 		<view class="dice-container" bindtap="rollDice">
 			<view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
 		</view>
 		<block wx:for="{{board}}" wx:key="index">
 			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
 		</block>
-		<!-- 玩家位置标识 -->
 		<block wx:for="{{players}}" wx:key="index">
 			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
 				<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
 			</view>
 		</block>
 	</view>
-
+	<button class="btn-reset-game" type="primary" size="mini" bindtap="giveUpGame">投降</button>
 	<view class="player-items-wrap">
 		<view class="player-items-content" wx:if="{{myPlayerData.items.length > 0}}">
 			<view class="player-item" wx:for="{{myPlayerData.items}}" wx:for-item="item" wx:key="name">
@@ -41,6 +37,4 @@
 		</view>
 		<text wx:else>暂无道具</text>
 	</view>
-	<!-- 广告位 -->
-	<!-- <view class="ad">广告位</view> -->
 </view>

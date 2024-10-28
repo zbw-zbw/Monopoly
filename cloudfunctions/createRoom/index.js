@@ -32,19 +32,27 @@ exports.main = async (event) => {
         roomId,
       })
       .get();
-    if (!existingRoom.data.length) {
+    if (existingRoom.data.length) {
+      return {
+        success: true,
+        message: "房间已存在",
+        data: {
+          roomId,
+        },
+      };
+    } else {
       await db.collection("rooms").add({
         data: roomData,
       });
-    }
 
-    return {
-      success: true,
-      message: "创建房间失败",
-      data: {
-        roomId,
-      },
-    };
+      return {
+        success: true,
+        message: "创建房间成功",
+        data: {
+          roomId,
+        },
+      };
+    }
   } catch (error) {
     return {
       success: false,

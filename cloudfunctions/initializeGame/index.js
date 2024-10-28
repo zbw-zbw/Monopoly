@@ -78,6 +78,7 @@ const initBoard = () => {
 exports.main = async (event) => {
   try {
     const { roomId, players } = event;
+    const randomIndex = Math.floor(Math.random() * players.length);
     const initPlayers = players.map((player, index) => ({
       ...player,
       money: playerInitMoney,
@@ -99,7 +100,8 @@ exports.main = async (event) => {
         data: {
           gameStatus: "IN_PROGRESS",
           players: initPlayers,
-          currentPlayerIndex: 0,
+          currentPlayerIndex: randomIndex,
+          isUpdateCurrentIndex: true,
           board: initBoard(),
         },
       });

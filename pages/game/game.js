@@ -24,7 +24,6 @@ Page({
         amount: unitPrice,
         message: `你随地扔垃圾，罚款${unitPrice}元！`,
       },
-      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
       {
         type: "item",
         item: "双倍卡",
@@ -48,7 +47,6 @@ Page({
         message: `你随地扔垃圾，罚款${unitPrice}元！`,
       },
       { type: "skip", message: "你掉进了陷阱，跳过下一轮行动！" },
-      { type: "teleport", destination: 0, message: "你被传送回了起点！" },
     ],
     items: [
       {
@@ -157,54 +155,55 @@ Page({
           if (snapshot.docs.length) {
             const roomData = snapshot.docs[0];
             console.log("watchRoomData update:", roomData);
-            const {
-              isUpdateCurrentIndex,
-              userInfo: invalidUserInfo,
-              ...data
-            } = roomData;
-            const {
-              players,
-              isRollingDice,
-              currentPlayerIndex,
-              diceResult,
-              gameStatus,
-            } = data;
-            const { userInfo, currentPlayerIndex: lastPlayerIndex } = this.data;
-            const myPlayerData = players.find(
-              (player) => player.openId === userInfo.openId
-            );
-            const currentPlayer = players[currentPlayerIndex];
-            const isMyTurn = currentPlayer.openId === userInfo.openId;
-
-            // 游戏结束
-            if (gameStatus === "over") {
-              this.onGameOver(roomData);
-            }
-
-            // 回合轮换
-            if (
-              isUpdateCurrentIndex &&
-              currentPlayerIndex !== lastPlayerIndex
-            ) {
-              this.onChangeCurrentPlayerIndex(isMyTurn);
-            }
-
-            // TODO 摇骰子动画
-            if (isRollingDice && !isMyTurn) {
-              this.playDiceAnimation(diceResult);
-            }
-
-            this.setData({
-              ...data,
-              isMyTurn,
-              myPlayerData,
-            });
+            this.handleRoomDataUpdate(roomData);
           }
         },
         onError: (error) => {
           console.error("watchRoomData error:", error);
         },
       });
+  },
+
+  handleRoomDataUpdate(roomData) {
+    const { userInfo } = this.data;
+    const { players, currentPlayerIndex } = roomData;
+    const currentPlayer = players[currentPlayerIndex];
+    const isMyTurn = currentPlayer.openId === userInfo.openId;
+    const myPlayerData = players.find(
+      (player) => player.openId === userInfo.openId
+    );
+    roomData.isMyTurn = isMyTurn;
+    roomData.myPlayerData = myPlayerData;
+
+    const isInitializing = !this.lastRoomData;
+    if (isInitializing) {
+      this.onChangeCurrentPlayerIndex(roomData);
+      this.onOtherPlayerRollingDice(roomData);
+      this.checkGameStatus(roomData);
+    } else {
+      const { currentPlayerIndex, gameStatus, isRollingDice } = roomData;
+      const {
+        currentPlayerIndex: lastCurrentPlayerIndex,
+        gameStatus: lastGameStatus,
+        isRollingDice: lastIsRollingDice,
+      } = this.lastRoomData;
+      if (currentPlayerIndex !== lastCurrentPlayerIndex) {
+        this.onChangeCurrentPlayerIndex(roomData);
+      }
+
+      if (isRollingDice !== lastIsRollingDice && isRollingDice) {
+        this.onOtherPlayerRollingDice(roomData);
+      }
+
+      if (gameStatus !== lastGameStatus) {
+        this.checkGameStatus(roomData);
+      }
+    }
+
+    this.lastRoomData = roomData;
+    this.setData({
+      ...roomData,
+    });
   },
 
   rollDice() {
@@ -226,9 +225,10 @@ Page({
       diceImg: "/assets/roll-dice.gif",
     });
 
+    let isMyTurn = true;
     let diceResult = result;
     if (result) {
-      // 其他玩家的回合
+      isMyTurn = false;
     } else {
       diceResult = Math.floor(Math.random() * 6) + 1;
       this.updateRoomData({
@@ -250,27 +250,25 @@ Page({
       await this.updateRoomData({
         isRollingDice: false,
       });
-      this.movePlayer(diceResult);
+      this.movePlayer(diceResult, isMyTurn);
     }, 1000);
   },
 
-  movePlayer(diceResult) {
+  movePlayer(diceResult, isMyTurn) {
     const { currentPlayerIndex, players, board } = this.data;
     const player = players[currentPlayerIndex];
     const startPosition = player.position;
     const diceToMove = player.doubleCardActive ? diceResult * 2 : diceResult;
     const targetPosition = (startPosition + diceToMove) % board.length;
-    this.animatePlayerMovement(startPosition, targetPosition);
+    this.animatePlayerMovement(startPosition, targetPosition, isMyTurn);
   },
 
-  animatePlayerMovement(start, target) {
-    const { players, board, currentPlayerIndex, isMyTurn } = this.data;
+  animatePlayerMovement(start, target, isMyTurn) {
+    const { players, board, currentPlayerIndex } = this.data;
     const player = players[currentPlayerIndex];
 
     if (start === target) {
-      if (isMyTurn) {
-        this.handleTileEvent(player, board[player.position]);
-      }
+      isMyTurn && this.handleTileEvent(player, board[player.position]);
 
       return;
     }
@@ -291,7 +289,7 @@ Page({
       playerAnimation: animation.export(),
     });
     setTimeout(() => {
-      this.animatePlayerMovement(nextPosition, target);
+      this.animatePlayerMovement(nextPosition, target, isMyTurn);
     }, duration);
   },
 
@@ -300,8 +298,8 @@ Page({
     switch (tile.type) {
       case "start":
         this.handleStartEvent(player, tile);
-      case "property":
-        this.handlePropertyEvent(player, tile);
+      case "shop":
+        this.handleShopEvent(player);
         break;
       case "chance":
         this.handleChanceEvent(player, chanceEvents);
@@ -309,8 +307,9 @@ Page({
       case "trap":
         this.handleTrapEvent(player, trapEvents);
         break;
-      case "shop":
-        this.handleShopEvent(player);
+
+      case "property":
+        this.handlePropertyEvent(player, tile);
         break;
       default:
         break;
@@ -323,6 +322,90 @@ Page({
       icon: "none",
     });
     player.money += tile.price;
+    this.updateRoomData({
+      players: this.updatePlayers(player),
+      isUpdateCurrentIndex: true,
+    });
+  },
+
+  handleShopEvent(player) {
+    const { items } = this.data;
+    const itemList = items.map(({ name, price }) => `购买${name}（${price}元)`);
+    wx.showActionSheet({
+      itemList,
+      success: (res) => {
+        const { tapIndex } = res;
+        const { name, price } = items[tapIndex];
+        if (player.money >= price) {
+          this.addItem(player, name);
+          player.money -= price;
+          wx.showToast({
+            title: `成功购买${name}！`,
+            icon: "none",
+          });
+        } else {
+          wx.showToast({
+            title: "资产不足！",
+            icon: "none",
+          });
+        }
+      },
+      fail: (error) => {
+        console.warn("购买失败:", error);
+      },
+      complete: () => {
+        this.updateRoomData({
+          players: this.updatePlayers(player),
+          isUpdateCurrentIndex: true,
+        });
+      },
+    });
+  },
+
+  handleChanceEvent(player, chanceEvents) {
+    const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
+    wx.showToast({
+      title: event.message,
+      icon: "none",
+    });
+    switch (event.type) {
+      case "reward":
+        player.money += event.amount;
+        break;
+      case "penalty":
+        const shieldActive = this.checkShieldActive(player);
+        if (!shieldActive) player.money -= event.amount;
+        break;
+      case "item":
+        this.addItem(player, event.item);
+        break;
+    }
+    this.updateRoomData({
+      players: this.updatePlayers(player),
+      isUpdateCurrentIndex: true,
+    });
+  },
+
+  handleTrapEvent(player, trapEvents) {
+    const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
+    wx.showToast({
+      title: event.message,
+      icon: "none",
+    });
+    switch (event.type) {
+      case "penalty":
+        const shieldActive = this.checkShieldActive(player);
+        if (!shieldActive) {
+          player.money -= event.amount;
+        }
+        break;
+      case "skip":
+        player.skipNextTurn = true;
+        break;
+      case "teleport":
+        player.position = event.destination;
+        break;
+    }
     this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
@@ -421,93 +504,6 @@ Page({
     }
   },
 
-  handleChanceEvent(player, chanceEvents) {
-    const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
-    wx.showToast({
-      title: event.message,
-      icon: "none",
-    });
-    switch (event.type) {
-      case "reward":
-        player.money += event.amount;
-        break;
-      case "penalty":
-        const shieldActive = this.checkShieldActive(player);
-        if (!shieldActive) player.money -= event.amount;
-        break;
-      case "teleport":
-        player.position = event.destination;
-        break;
-      case "item":
-        this.addItem(player, event.item);
-        break;
-    }
-    this.updateRoomData({
-      players: this.updatePlayers(player),
-      isUpdateCurrentIndex: true,
-    });
-  },
-
-  handleTrapEvent(player, trapEvents) {
-    const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
-    wx.showToast({
-      title: event.message,
-      icon: "none",
-    });
-    switch (event.type) {
-      case "penalty":
-        const shieldActive = this.checkShieldActive(player);
-        if (!shieldActive) {
-          player.money -= event.amount;
-        }
-        break;
-      case "skip":
-        player.skipNextTurn = true;
-        break;
-      case "teleport":
-        player.position = event.destination;
-        break;
-    }
-    this.updateRoomData({
-      players: this.updatePlayers(player),
-      isUpdateCurrentIndex: true,
-    });
-  },
-
-  handleShopEvent(player) {
-    const { items } = this.data;
-    const itemList = items.map(({ name, price }) => `购买${name}（${price}元)`);
-    wx.showActionSheet({
-      itemList,
-      success: (res) => {
-        const { tapIndex } = res;
-        const { name, price } = items[tapIndex];
-        if (player.money >= price) {
-          this.addItem(player, name);
-          player.money -= price;
-          wx.showToast({
-            title: `成功购买${name}！`,
-            icon: "none",
-          });
-        } else {
-          wx.showToast({
-            title: "资产不足！",
-            icon: "none",
-          });
-        }
-      },
-      fail: (error) => {
-        console.warn("购买失败:", error);
-      },
-      complete: () => {
-        this.updateRoomData({
-          players: this.updatePlayers(player),
-          isUpdateCurrentIndex: true,
-        });
-      },
-    });
-  },
-
   updateBoard(newTile) {
     const { board } = this.data;
     let newBoard = { ...board };
@@ -594,6 +590,7 @@ Page({
     }
   },
 
+  // 是否使用了防护罩
   checkShieldActive(player) {
     if (player.shieldActive) {
       player.shieldActive = false;
@@ -607,9 +604,12 @@ Page({
     return false;
   },
 
-  onChangeCurrentPlayerIndex(isMyTurn) {
-    console.log("onChangeCurrentPlayerIndex, isMyTurn:", isMyTurn);
-    if (isMyTurn) {
+  // 回合轮换
+  onChangeCurrentPlayerIndex(roomData) {
+    if (!roomData.isUpdateCurrentIndex) return;
+
+    console.log("onChangeCurrentPlayerIndex, isMyTurn:", roomData.isMyTurn);
+    if (roomData.isMyTurn) {
       wx.showToast({
         title: `现在轮到你的回合！`,
         icon: "none",
@@ -620,18 +620,28 @@ Page({
     }
   },
 
-  onGameOver(roomData) {
-    wx.showModal({
-      title: "游戏结束",
-      content: `恭喜 ${roomData.winner.name} 胜利！`,
-      showCancel: false,
-      success: () => {
-        this.resetGame();
-      },
-    });
-    console.log("onGameOver, roomData:", roomData);
+  // 其他玩家正在摇骰子
+  onOtherPlayerRollingDice(roomData) {
+    if (roomData.isRollingDice && !roomData.isMyTurn) {
+      this.playDiceAnimation(roomData.diceResult);
+    }
   },
 
+  // 游戏结束
+  checkGameStatus(roomData) {
+    if (roomData.gameStatus === "over") {
+      wx.showModal({
+        title: "游戏结束",
+        content: `恭喜 ${roomData.winner.nickName} 胜利！`,
+        showCancel: false,
+        success: () => {
+          this.resetGame();
+        },
+      });
+    }
+  },
+
+  // 重新开始游戏
   resetGame() {
     wx.redirectTo({
       url: "/pages/index/index",

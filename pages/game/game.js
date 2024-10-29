@@ -44,36 +44,36 @@ Page({
       {
         type: "reward",
         amount: unitPrice,
-        message: `你中了彩票，获得${unitPrice}元！`,
+        message: `中了彩票，获得${unitPrice}元！`,
       },
       {
         type: "penalty",
         amount: unitPrice,
-        message: `你随地扔垃圾，罚款${unitPrice}元！`,
+        message: `随地扔垃圾，罚款${unitPrice}元！`,
       },
       {
         type: "item",
         item: "双倍卡",
-        message: "你运气爆棚，捡到了双倍卡！",
+        message: "运气爆棚，捡到了双倍卡！",
       },
       {
         type: "item",
         item: "控制骰子",
-        message: "你运气爆棚，捡到了控制骰子！",
+        message: "运气爆棚，捡到了控制骰子！",
       },
       {
         type: "item",
         item: "防护罩",
-        message: "你运气爆棚，捡到了防护罩！",
+        message: "运气爆棚，捡到了防护罩！",
       },
     ],
     trapEvents: [
       {
         type: "penalty",
         amount: unitPrice,
-        message: `你随地扔垃圾，罚款${unitPrice}元！`,
+        message: `随地扔垃圾，罚款${unitPrice}元！`,
       },
-      { type: "skip", message: "你掉进了陷阱，跳过下一轮行动！" },
+      { type: "skip", message: "掉进了陷阱，跳过下一轮行动！" },
     ],
     items: [
       {
@@ -351,7 +351,6 @@ Page({
 
   handleStartEvent(player, tile) {
     const message = `${player.name}经过了起点，获得${tile.price}元补贴`;
-    showToast(message);
     player.money += tile.price;
     this.updateRoomData({
       players: this.updatePlayers(player),
@@ -372,7 +371,6 @@ Page({
         if (player.money >= price) {
           this.addItem(player, name);
           player.money -= price;
-          showToast(`成功购买${name}！`);
           message = `${player.nickName}购买了${name}`;
         } else {
           showToast("资产不足！");
@@ -394,7 +392,6 @@ Page({
   handleChanceEvent(player, chanceEvents) {
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
     let message = event.message;
-    showToast(message);
     switch (event.type) {
       case "reward":
         player.money += event.amount;
@@ -416,7 +413,7 @@ Page({
 
   handleTrapEvent(player, trapEvents) {
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
-    const message = event.message;
+    const message = `${player.nickName}${event.message}`;
     showToast(message);
     switch (event.type) {
       case "penalty":
@@ -443,7 +440,7 @@ Page({
     const { players } = this.data;
     switch (true) {
       // 经过空地 可占领
-      case !tile.owner:
+      case !tile.owner && !tile.level:
         let message1 = "";
         wx.showModal({
           content: `你要占领此空地吗？费用：${tile.price}元`,

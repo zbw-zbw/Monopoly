@@ -120,12 +120,11 @@
 .page-game .btn-reset-game {
   position: absolute;
   bottom: 200px;
-  margin: 20px auto;
 }
 
 .player-items-wrap {
   position: absolute;
-  bottom: 60px;
+  bottom: 56px;
 }
 
 .player-item {

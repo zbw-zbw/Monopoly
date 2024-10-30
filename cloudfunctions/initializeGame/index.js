@@ -88,6 +88,7 @@ exports.main = async (event) => {
       items: [],
       doubleCardActive: false,
       shieldActive: false,
+      controlDiceValue: 0,
       skipNextTurn: false,
       isBankrupt: false,
     }));

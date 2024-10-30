@@ -264,10 +264,17 @@ Page({
     if (result) {
       isMyTurn = false;
     } else {
-      diceResult = Math.floor(Math.random() * 6) + 1;
+      const { myPlayerData } = this.data;
+      if (myPlayerData.controlDiceValue) {
+        diceResult = myPlayerData.controlDiceValue;
+        myPlayerData.controlDiceValue = 0;
+      } else {
+        diceResult = Math.floor(Math.random() * 6) + 1;
+      }
       this.updateRoomData({
         isRollingDice: true,
         diceResult,
+        players: this.updatePlayers(myPlayerData),
       });
     }
 
@@ -399,7 +406,7 @@ Page({
         break;
       case "penalty":
         const shieldActiveMessage = this.checkShieldActive(player);
-        if (shieldActive) {
+        if (shieldActiveMessage) {
           message = shieldActiveMessage;
         } else {
           player.money -= event.amount;
@@ -569,6 +576,8 @@ Page({
       }
     } else {
       showToast("未找到该道具！");
+
+      return;
     }
 
     let message = "";
@@ -587,11 +596,15 @@ Page({
           success: (res) => {
             const chosenNumber = parseInt(res.tapIndex) + 1;
             message = `${player.nickName} 使用了控制骰子！`;
+            player.controlDiceValue = chosenNumber;
             this.updateRoomData({
               diceResult: chosenNumber,
               players: this.updatePlayers(player),
               message,
             });
+          },
+          fail: (error) => {
+            console.error("useItem error:", error);
           },
         });
         break;

@@ -1,16 +1,16 @@
 const unitPrice = 500;
 
-let toastQueue = [];
+const toastQueue = [];
 const toastDuration = 1500;
 
-function showToast(message) {
+const showToast = (message) => {
   toastQueue.push(message);
   if (toastQueue.length === 1) {
-    displayNextToast();
+    showNextToast();
   }
-}
+};
 
-function displayNextToast() {
+const showNextToast = () => {
   if (toastQueue.length === 0) return;
 
   const message = toastQueue[0];
@@ -19,13 +19,14 @@ function displayNextToast() {
     icon: "none",
     duration: toastDuration,
     success: () => {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
         toastQueue.shift();
-        displayNextToast();
+        showNextToast();
       }, toastDuration);
     },
   });
-}
+};
 
 Page({
   data: {
@@ -97,7 +98,7 @@ Page({
       this.initialData(roomId);
       this.initialRoomData(roomId);
     } else {
-      showToast("游戏异常，请稍后再试");
+      showToast("游戏异常，请稍后再试！");
       this.resetGame();
     }
   },
@@ -350,7 +351,7 @@ Page({
   },
 
   handleStartEvent(player, tile) {
-    const message = `${player.name}经过了起点，获得${tile.price}元补贴`;
+    const message = `${player.name} 经过了起点，获得 ${tile.price} 元补贴`;
     player.money += tile.price;
     this.updateRoomData({
       players: this.updatePlayers(player),
@@ -371,7 +372,7 @@ Page({
         if (player.money >= price) {
           this.addItem(player, name);
           player.money -= price;
-          message = `${player.nickName}购买了${name}`;
+          message = `${player.nickName} 购买了 ${name}`;
         } else {
           showToast("资产不足！");
         }
@@ -397,8 +398,12 @@ Page({
         player.money += event.amount;
         break;
       case "penalty":
-        const shieldActive = this.checkShieldActive(player);
-        if (!shieldActive) player.money -= event.amount;
+        const shieldActiveMessage = this.checkShieldActive(player);
+        if (shieldActive) {
+          message = shieldActiveMessage;
+        } else {
+          player.money -= event.amount;
+        }
         break;
       case "item":
         this.addItem(player, event.item);
@@ -413,12 +418,14 @@ Page({
 
   handleTrapEvent(player, trapEvents) {
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
-    const message = `${player.nickName}${event.message}`;
+    let message = `${player.nickName}${event.message}`;
     showToast(message);
     switch (event.type) {
       case "penalty":
-        const shieldActive = this.checkShieldActive(player);
-        if (!shieldActive) {
+        const shieldActiveMessage = this.checkShieldActive(player);
+        if (shieldActive) {
+          message = shieldActiveMessage;
+        } else {
           player.money -= event.amount;
         }
         break;
@@ -441,9 +448,9 @@ Page({
     switch (true) {
       // 经过空地 可占领
       case !tile.owner && !tile.level:
-        let message1 = "";
+        let buyMessage = "";
         wx.showModal({
-          content: `你要占领此空地吗？费用：${tile.price}元`,
+          content: `你要占领此空地吗？费用：${tile.price} 元！`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= tile.price) {
@@ -452,7 +459,7 @@ Page({
                 tile.bgColor = player.primaryColor;
                 tile.level = 1;
                 player.ownedPropertiesCount += 1;
-                message1 = `${player.nickName}占领了此空地！`;
+                buyMessage = `${player.nickName} 占领了此空地！`;
               } else {
                 showToast("兄弟，你的钱不够！");
               }
@@ -463,7 +470,7 @@ Page({
               players: this.updatePlayers(player),
               board: this.updateBoard(tile),
               isUpdateCurrentIndex: true,
-              message: message1,
+              message: buyMessage,
             });
           },
         });
@@ -471,16 +478,16 @@ Page({
       // 经过自家领地 可升级
       case tile.owner === player.openId:
         const upgradeCost = tile.level * tile.price;
-        let message2 = "";
+        let upgradeMessage = "";
         wx.showModal({
-          content: `你要升级此领地吗？费用: ${upgradeCost}元`,
+          content: `你要升级此领地吗？费用: ${upgradeCost} 元！`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= upgradeCost) {
                 player.money -= upgradeCost;
                 if (tile.level < 5) {
                   tile.level += 1;
-                  message2 = `${player.nickName}成功将此领地升到${tile.level}级！`;
+                  upgradeMessage = `${player.nickName} 成功将此领地升到 ${tile.level} 级！`;
                 } else {
                   showToast("已达到最高等级！");
                 }
@@ -494,7 +501,7 @@ Page({
               players: this.updatePlayers(player),
               board: this.updateBoard(tile),
               isUpdateCurrentIndex: true,
-              message: message2,
+              message: upgradeMessage,
             });
           },
         });
@@ -502,17 +509,17 @@ Page({
       // 经过别家领地 需过路费
       case tile.owner !== player.openId:
         const toll = tile.price * tile.level;
-        let message3 = this.checkShieldActive(player);
-        if (!message3) {
+        let payMessage = this.checkShieldActive(player);
+        if (!payMessage) {
           player.money -= toll;
           const owner = players.find((p) => p.openId === tile.owner);
           owner.money += toll;
-          message3 = `${player.nickName} 支付了${toll}元过路费给${owner.nickName}`;
+          payMessage = `${player.nickName} 支付了 ${toll} 元过路费给 ${owner.nickName}`;
         }
         this.updateRoomData({
           players: this.updatePlayers(player),
           isUpdateCurrentIndex: true,
-          message: message3,
+          message: payMessage,
         });
         break;
     }
@@ -561,14 +568,14 @@ Page({
         player.items.splice(itemIndex, 1);
       }
     } else {
-      showToast("未找到该道具");
+      showToast("未找到该道具！");
     }
 
     let message = "";
     switch (item.name) {
       case "双倍卡":
         player.doubleCardActive = true;
-        message = `${player.nickName}使用了双倍卡`;
+        message = `${player.nickName} 使用了双倍卡！`;
         this.updateRoomData({
           players: this.updatePlayers(player),
           message,
@@ -579,7 +586,7 @@ Page({
           itemList: ["1", "2", "3", "4", "5", "6"],
           success: (res) => {
             const chosenNumber = parseInt(res.tapIndex) + 1;
-            message = `${player.nickName}使用了控制骰子`;
+            message = `${player.nickName} 使用了控制骰子！`;
             this.updateRoomData({
               diceResult: chosenNumber,
               players: this.updatePlayers(player),
@@ -590,7 +597,7 @@ Page({
         break;
       case "防护罩":
         player.shieldActive = true;
-        message = `${player.nickName}使用了防护罩`;
+        message = `${player.nickName} 使用了防护罩！`;
         this.updateRoomData({
           players: this.updatePlayers(player),
           message,
@@ -603,19 +610,19 @@ Page({
   checkShieldActive(player) {
     if (player.shieldActive) {
       player.shieldActive = false;
-      const message = `防护罩已生效，${player.nickName}免受罚款！`;
+      const message = `防护罩已生效，${player.nickName} 免受罚款！`;
 
       return message;
     }
 
-    return false;
+    return "";
   },
 
   // 同步其他玩家触发的提示信息
   showOtherPlayerMessage(roomData) {
-    if (!roomData.message) return;
-
-    showToast(roomData.message);
+    if (roomData.message) {
+      showToast(roomData.message);
+    }
   },
 
   // 回合轮换

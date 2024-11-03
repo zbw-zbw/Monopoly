@@ -58,7 +58,9 @@ Page({
   },
 
   onShow() {
-    this.watchRoom(this.data.roomId);
+    if (this.data.roomId) {
+      this.watchRoom(this.data.roomId);
+    }
   },
 
   onHide() {

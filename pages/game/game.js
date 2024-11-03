@@ -98,7 +98,6 @@ Page({
       },
     ],
     countdown: initCountdown,
-    countdownTimer: null,
   },
 
   onLoad(options) {
@@ -113,7 +112,9 @@ Page({
   },
 
   onShow() {
-    this.watchRoomData(this.data.roomId);
+    if (this.data.roomId) {
+      this.watchRoomData(this.data.roomId);
+    }
   },
 
   onHide() {
@@ -127,8 +128,8 @@ Page({
       this.watcher.close();
     }
 
-    if (this.data.countdownTimer) {
-      clearInterval(this.data.countdownTimer);
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
     }
   },
 
@@ -269,7 +270,7 @@ Page({
       showToast("别着急，还没轮到你呢！");
       return;
     }
-
+    this.clearTurnCountdown();
     this.playDiceAnimation();
   },
 
@@ -689,29 +690,33 @@ Page({
         countdown: initCountdown,
       });
     }
-    this.startTurnCountdown();
+    const startTurnCountdownTimer = setTimeout(() => {
+      clearTimeout(startTurnCountdownTimer);
+      this.startTurnCountdown();
+    }, toastDuration);
   },
 
   // 开始玩家回合倒计时
   startTurnCountdown() {
-    if (this.data.countdownTimer) {
-      clearInterval(this.data.countdownTimer);
-    }
-
-    this.setData({
-      countdown: initCountdown,
-    });
-
-    this.data.countdownTimer = setInterval(() => {
+    this.clearTurnCountdown();
+    this.countdownTimer = setInterval(() => {
       this.setData({
         countdown: formatTime(this.data.countdown - 1),
       });
-
       if (this.data.countdown <= 0) {
-        clearInterval(this.data.countdownTimer);
+        clearInterval(this.countdownTimer);
         this.endTurn();
       }
     }, 1000);
+  },
+
+  clearTurnCountdown() {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.setData({
+        countdown: initCountdown,
+      });
+    }
   },
 
   // 回合倒计时结束切换下一个玩家

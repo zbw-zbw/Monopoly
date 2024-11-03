@@ -4,7 +4,6 @@ const db = cloud.database();
 
 exports.main = async (event) => {
   const { openId, avatarUrl, nickName } = event;
-
   try {
     const userQuery = await db
       .collection("users")
@@ -12,7 +11,6 @@ exports.main = async (event) => {
         openId,
       })
       .get();
-
     if (userQuery.data.length > 0) {
       const userId = userQuery.data[0]._id;
       await db.collection("users").doc(userId).update({

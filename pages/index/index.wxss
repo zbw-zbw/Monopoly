@@ -120,7 +120,7 @@
 
 .players .player .room-host {
   position: absolute;
-  top: -4px;
+  top: -8px;
   left: -6px;
   transform: rotate(-10deg);
   width: 24px;

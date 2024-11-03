@@ -1,6 +1,34 @@
 const defaultAvatarUrl =
   "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0";
 
+const toastQueue = [];
+const toastDuration = 1000;
+
+const showToast = (message) => {
+  toastQueue.push(message);
+  if (toastQueue.length === 1) {
+    showNextToast();
+  }
+};
+
+const showNextToast = () => {
+  if (toastQueue.length === 0) return;
+
+  const message = toastQueue[0];
+  wx.showToast({
+    title: message,
+    icon: "none",
+    duration: toastDuration,
+    success: () => {
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
+        toastQueue.shift();
+        showNextToast();
+      }, toastDuration);
+    },
+  });
+};
+
 Page({
   data: {
     isLogin: false,
@@ -29,6 +57,16 @@ Page({
     this.initialUserInfo();
   },
 
+  onShow() {
+    this.watchRoom(this.data.roomId);
+  },
+
+  onHide() {
+    if (this.watcher) {
+      this.watcher.close();
+    }
+  },
+
   onUnload() {
     if (this.watcher) {
       this.watcher.close();
@@ -38,10 +76,7 @@ Page({
   onShareAppMessage() {
     const { roomId } = this.data;
     if (!roomId) {
-      wx.showToast({
-        title: "房间无效，无法分享。",
-        icon: "none",
-      });
+      showToast("房间无效，无法分享！");
       return;
     }
 
@@ -70,10 +105,7 @@ Page({
     wx.cloud.callFunction({
       name: "login",
       success: (res) => {
-        wx.showToast({
-          title: "登录成功",
-          icon: "none",
-        });
+        showToast("登录成功！");
         const { openId } = res.result;
         console.log("login success:", res.result);
         this.updateUserInfo({
@@ -81,10 +113,7 @@ Page({
         });
       },
       fail: (error) => {
-        wx.showToast({
-          title: "登录失败",
-          icon: "none",
-        });
+        showToast("登录失败！");
         console.error("login fail:", error);
       },
     });
@@ -98,10 +127,7 @@ Page({
       cloudPath,
       filePath: avatarUrl,
       success: (res) => {
-        wx.showToast({
-          title: "头像已更新",
-          icon: "none",
-        });
+        showToast("头像已更新！");
         const { fileID } = res;
         this.updateUserInfo({
           avatarUrl: fileID,
@@ -109,10 +135,7 @@ Page({
         console.log("uploadFile success:", fileID);
       },
       fail: (err) => {
-        wx.showToast({
-          title: "头像上传失败",
-          icon: "none",
-        });
+        wx.showToast("头像上传失败！");
         console.error("uploadFile fail:", err);
       },
     });
@@ -127,15 +150,9 @@ Page({
       this.updateUserInfo({
         nickName,
       });
-      wx.showToast({
-        title: "昵称已更新",
-        icon: "none",
-      });
+      showToast("昵称已更新！");
     } else {
-      wx.showToast({
-        title: "昵称不能为空",
-        icon: "none",
-      });
+      showToast("昵称不能为空！");
     }
   },
 
@@ -168,15 +185,9 @@ Page({
   startGame() {
     const { userInfo, roomId } = this.data;
     if (userInfo.avatarUrl === defaultAvatarUrl) {
-      wx.showToast({
-        title: "请先设置头像",
-        icon: "none",
-      });
+      showToast("请先设置头像！");
     } else if (!userInfo.nickName) {
-      wx.showToast({
-        title: "请先设置昵称",
-        icon: "none",
-      });
+      showToast("请先设置昵称！");
     } else if (roomId) {
       this.joinRoom(roomId);
     } else {
@@ -309,12 +320,12 @@ Page({
       this.initializeGame();
     } else if (!isHost) {
       wx.showToast({
-        title: "只有房主可以开始游戏",
+        title: "请联系房主开始游戏！",
         icon: "none",
       });
     } else {
       wx.showToast({
-        title: "至少需要 2 位玩家才能开始游戏",
+        title: "至少需要 2 位玩家才能开始游戏！",
         icon: "none",
       });
     }

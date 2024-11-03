@@ -1,6 +1,6 @@
 <view class="page page-index">
   <view class="login-user-info" wx:if="{{isLogin}}">
-    <view class="page-title">点击头像或昵称可修改</view>
+    <view class="page-title">点击头像和昵称进行修改</view>
     <!-- 用户信息 -->
     <button open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" class="avatar-wrapper">
       <image class="avatar" src="{{userInfo.avatarUrl}}"></image>

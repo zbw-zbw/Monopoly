@@ -13,10 +13,8 @@ exports.main = async (event) => {
         roomId,
       })
       .get();
-
     if (roomRes.data.length > 0) {
       const room = roomRes.data[0];
-
       // 检查用户是否已在房间内
       const isExist = room.players.some(
         (player) => player.openId === user.openId
@@ -28,7 +26,6 @@ exports.main = async (event) => {
           players: room.players,
         };
       }
-
       // 检查房间是否已满
       if (room.players.length >= MAX_PLAYERS) {
         return {
@@ -36,7 +33,6 @@ exports.main = async (event) => {
           message: "房间已满",
         };
       }
-
       const updatedPlayers = [...room.players, user];
       await db
         .collection("rooms")
@@ -46,7 +42,6 @@ exports.main = async (event) => {
             players: updatedPlayers,
           },
         });
-
       return {
         success: true,
         message: "加入房间成功",

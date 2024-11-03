@@ -1,7 +1,5 @@
-const unitPrice = 500;
-
 const toastQueue = [];
-const toastDuration = 1500;
+const toastDuration = 1000;
 
 const showToast = (message) => {
   toastQueue.push(message);
@@ -28,6 +26,12 @@ const showNextToast = () => {
   });
 };
 
+const initCountdown = 10;
+
+const formatTime = (time) => {
+  return time < 10 ? "0" + time : time.toString();
+};
+
 Page({
   data: {
     roomId: null,
@@ -44,13 +48,13 @@ Page({
     chanceEvents: [
       {
         type: "reward",
-        amount: unitPrice,
-        message: `中了彩票，获得${unitPrice}元！`,
+        amount: 500,
+        message: `中了彩票，获得500元！`,
       },
       {
         type: "penalty",
-        amount: unitPrice,
-        message: `随地扔垃圾，罚款${unitPrice}元！`,
+        amount: 500,
+        message: `随地扔垃圾，罚款500元！`,
       },
       {
         type: "item",
@@ -71,10 +75,13 @@ Page({
     trapEvents: [
       {
         type: "penalty",
-        amount: unitPrice,
-        message: `随地扔垃圾，罚款${unitPrice}元！`,
+        amount: 500,
+        message: `随地扔垃圾，罚款500元！`,
       },
-      { type: "skip", message: "掉进了陷阱，跳过下一轮行动！" },
+      {
+        type: "skip",
+        message: "掉进了陷阱，跳过下一轮行动！",
+      },
     ],
     items: [
       {
@@ -90,6 +97,8 @@ Page({
         price: 500,
       },
     ],
+    countdown: initCountdown,
+    countdownTimer: null,
   },
 
   onLoad(options) {
@@ -103,9 +112,23 @@ Page({
     }
   },
 
+  onShow() {
+    this.watchRoomData(this.data.roomId);
+  },
+
+  onHide() {
+    if (this.watcher) {
+      this.watcher.close();
+    }
+  },
+
   onUnload() {
     if (this.watcher) {
       this.watcher.close();
+    }
+
+    if (this.data.countdownTimer) {
+      clearInterval(this.data.countdownTimer);
     }
   },
 
@@ -199,10 +222,8 @@ Page({
     );
     roomData.isMyTurn = isMyTurn;
     roomData.myPlayerData = myPlayerData;
-
     const isInitializing = !this.lastRoomData;
     if (isInitializing) {
-      // this.showOtherPlayerMessage(roomData);
       this.onChangeCurrentPlayerIndex(roomData);
       this.onOtherPlayerRollingDice(roomData);
       this.checkGameStatus(roomData);
@@ -245,8 +266,7 @@ Page({
   rollDice() {
     const { canRollDice } = this.data;
     if (!canRollDice) {
-      showToast("别着急，现在还没轮到你！");
-
+      showToast("别着急，还没轮到你呢！");
       return;
     }
 
@@ -299,8 +319,7 @@ Page({
     const { currentPlayerIndex, players, board } = this.data;
     const player = players[currentPlayerIndex];
     const startPosition = player.position;
-    const diceToMove = player.doubleCardActive ? diceResult * 2 : diceResult;
-    const targetPosition = (startPosition + diceToMove) % board.length;
+    const targetPosition = (startPosition + diceResult) % board.length;
     this.animatePlayerMovement(startPosition, targetPosition, isMyTurn);
   },
 
@@ -310,7 +329,6 @@ Page({
 
     if (start === target) {
       isMyTurn && this.handleTileEvent(player, board[player.position]);
-
       return;
     }
 
@@ -348,7 +366,6 @@ Page({
       case "trap":
         this.handleTrapEvent(player, trapEvents);
         break;
-
       case "property":
         this.handlePropertyEvent(player, tile);
         break;
@@ -358,8 +375,8 @@ Page({
   },
 
   handleStartEvent(player, tile) {
-    const message = `${player.name} 经过了起点，获得 ${tile.price} 元补贴`;
-    player.money += tile.price;
+    const price = this.checkdDoubleCardActive(player, tile.price);
+    const message = `${player.name} 经过了起点，获得 ${price} 元补贴`;
     this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
@@ -399,10 +416,14 @@ Page({
 
   handleChanceEvent(player, chanceEvents) {
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
-    let message = event.message;
+    let message = `${player.nickName} ${event.message}`;
     switch (event.type) {
       case "reward":
-        player.money += event.amount;
+        const price = this.checkdDoubleCardActive(player, event.amount);
+        message = `${player.nickName} ${event.message.replace(
+          /(\d+)/g,
+          price
+        )}`;
         break;
       case "penalty":
         const shieldActiveMessage = this.checkShieldActive(player);
@@ -430,7 +451,7 @@ Page({
     switch (event.type) {
       case "penalty":
         const shieldActiveMessage = this.checkShieldActive(player);
-        if (shieldActive) {
+        if (shieldActiveMessage) {
           message = shieldActiveMessage;
         } else {
           player.money -= event.amount;
@@ -536,7 +557,6 @@ Page({
     const { board } = this.data;
     let newBoard = { ...board };
     newBoard = board.map((tile) => (tile.id === newTile.id ? newTile : tile));
-
     return newBoard;
   },
 
@@ -546,7 +566,6 @@ Page({
     newPlayers = players.map((player) =>
       player.openId === newPlayer.openId ? newPlayer : player
     );
-
     return newPlayers;
   },
 
@@ -568,17 +587,18 @@ Page({
     const player = players[currentPlayerIndex];
     const itemIndex = player.items.findIndex((data) => data.name === item.name);
 
-    if (itemIndex > -1) {
+    if (itemIndex < 0) {
+      showToast("未找到该道具！");
+      return;
+    }
+
+    const decreaseItem = () => {
       if (player.items[itemIndex].count > 1) {
         player.items[itemIndex].count -= 1;
       } else {
         player.items.splice(itemIndex, 1);
       }
-    } else {
-      showToast("未找到该道具！");
-
-      return;
-    }
+    };
 
     let message = "";
     switch (item.name) {
@@ -589,6 +609,7 @@ Page({
           players: this.updatePlayers(player),
           message,
         });
+        decreaseItem();
         break;
       case "控制骰子":
         wx.showActionSheet({
@@ -602,6 +623,7 @@ Page({
               players: this.updatePlayers(player),
               message,
             });
+            decreaseItem();
           },
           fail: (error) => {
             console.error("useItem error:", error);
@@ -615,8 +637,22 @@ Page({
           players: this.updatePlayers(player),
           message,
         });
+        decreaseItem();
         break;
     }
+  },
+
+  // 是否使用了双倍卡
+  checkdDoubleCardActive(player, money) {
+    let configMoney = money;
+    if (player.doubleCardActive) {
+      configMoney = money * 2;
+      player.doubleCardActive = false;
+      return message;
+    }
+
+    player.money += configMoney;
+    return configMoney;
   },
 
   // 是否使用了防护罩
@@ -624,7 +660,6 @@ Page({
     if (player.shieldActive) {
       player.shieldActive = false;
       const message = `防护罩已生效，${player.nickName} 免受罚款！`;
-
       return message;
     }
 
@@ -645,11 +680,47 @@ Page({
     console.log("onChangeCurrentPlayerIndex, isMyTurn:", roomData.isMyTurn);
     if (roomData.isMyTurn) {
       showToast("嘿，现在轮到你了！");
-
       this.setData({
         canRollDice: true,
+        countdown: initCountdown,
+      });
+    } else {
+      this.setData({
+        countdown: initCountdown,
       });
     }
+    this.startTurnCountdown();
+  },
+
+  // 开始玩家回合倒计时
+  startTurnCountdown() {
+    if (this.data.countdownTimer) {
+      clearInterval(this.data.countdownTimer);
+    }
+
+    this.setData({
+      countdown: initCountdown,
+    });
+
+    this.data.countdownTimer = setInterval(() => {
+      this.setData({
+        countdown: formatTime(this.data.countdown - 1),
+      });
+
+      if (this.data.countdown <= 0) {
+        clearInterval(this.data.countdownTimer);
+        this.endTurn();
+      }
+    }, 1000);
+  },
+
+  // 回合倒计时结束切换下一个玩家
+  endTurn() {
+    const { currentPlayerIndex, players } = this.data;
+    this.updateRoomData({
+      isUpdateCurrentIndex: true,
+      message: `${players[currentPlayerIndex].nickName} 超时了！`,
+    });
   },
 
   // 其他玩家正在摇骰子
@@ -661,7 +732,7 @@ Page({
 
   // 游戏结束
   checkGameStatus(roomData) {
-    if (roomData.gameStatus === "over") {
+    if (roomData.gameStatus === "GAME_OVER") {
       wx.showModal({
         title: "游戏结束",
         content: `恭喜 ${roomData.winner.nickName} 胜利！`,
@@ -696,10 +767,13 @@ Page({
     const { roomId } = this.data;
     wx.cloud.callFunction({
       name: "clearRoomData",
-      data: { roomId },
+      data: {
+        roomId,
+      },
       success: (res) => {
         if (res.result.success) {
           this.resetGame();
+          showToast("投降成功，房间已解散！");
         } else {
           showToast("投降失败！");
           console.error("clearRoomData error:", res.result);

@@ -11,13 +11,13 @@ const initBoard = () => {
   const totalTiles = 40;
   const gridSize = 30;
   const tilePrice = 500;
-
   for (let i = 0; i < totalTiles; i++) {
     let tile = {
       id: i,
       x: 0,
       y: 0,
       type: "property",
+      name: "",
       bgColor: "#ffffff",
       price: 0,
       owner: null,
@@ -49,7 +49,6 @@ const initBoard = () => {
         tile.price = tilePrice;
         break;
     }
-
     if (i < 10) {
       tile.x = i * gridSize;
       tile.y = 0;
@@ -63,15 +62,12 @@ const initBoard = () => {
       tile.x = 0;
       tile.y = (9 - (i - 30)) * gridSize;
     }
-
     // 避免在拐角位置渲染重复的格子
     if (i > 0 && ((i % 10 === 0 && i < 40) || (i % 10 === 9 && i >= 30))) {
       continue;
     }
-
     board.push(tile);
   }
-
   return board;
 };
 
@@ -106,7 +102,6 @@ exports.main = async (event) => {
           board: initBoard(),
         },
       });
-
     return {
       success: true,
       message: "游戏初始化成功",

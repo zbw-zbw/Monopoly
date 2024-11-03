@@ -6,7 +6,6 @@ exports.main = async () => {
   if (!wxContext.OPENID || !wxContext.APPID) {
     throw new Error("Failed to retrieve OpenID or AppID.");
   }
-
   return {
     openId: wxContext.OPENID,
     appId: wxContext.APPID,

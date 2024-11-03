@@ -15,8 +15,11 @@
 		</block>
 	</view>
 	<view class="game-board">
-		<view class="dice-container" bindtap="rollDice">
-			<view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
+		<view class="dice-countdown-container">
+			<text class="turn-countdown">回合时间: {{countdown}} 秒</text>
+			<view class="dice-container" bindtap="rollDice">
+				<view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
+			</view>
 		</view>
 		<block wx:for="{{board}}" wx:key="index">
 			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>

@@ -1,15 +1,16 @@
 <view class="page page-index">
-  <view class="login-user-info" wx:if="{{isLogin}}">
-    <view class="page-title">点击头像和昵称进行修改</view>
+  <view class="page-title">
+    大富翁之我不是牛马
+  </view>
+  <view class="login-user-info">
     <!-- 用户信息 -->
     <button open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" class="avatar-wrapper">
-      <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
+      <image wx:if="{{userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}"></image>
+      <block wx:else>点击上传头像</block>
     </button>
     <input type="nickname" class="nickname" value="{{userInfo.nickName}}" placeholder="请输入昵称" bindblur="onChangeNickName" />
   </view>
-  <view class="page-title" wx:else>
-    大富翁之我不是牛马
-  </view>
+
   <!-- 开始游戏 -->
   <view class="btn-login">
     <button wx:if="{{isLogin}}" type="primary" bindtap="startGame">{{roomId ? '进入房间' : '开始游戏'}}</button>

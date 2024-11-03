@@ -113,23 +113,26 @@ Page({
 
   onShow() {
     if (this.data.roomId) {
+      this.clearWatcher();
       this.watchRoomData(this.data.roomId);
     }
   },
 
   onHide() {
-    if (this.watcher) {
-      this.watcher.close();
-    }
+    this.clearWatcher();
   },
 
   onUnload() {
-    if (this.watcher) {
-      this.watcher.close();
-    }
+    this.clearWatcher();
 
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
+    }
+  },
+
+  clearWatcher() {
+    if (this.watcher) {
+      this.watcher.close();
     }
   },
 
@@ -270,7 +273,6 @@ Page({
       showToast("别着急，还没轮到你呢！");
       return;
     }
-    this.clearTurnCountdown();
     this.playDiceAnimation();
   },
 
@@ -732,6 +734,7 @@ Page({
   onOtherPlayerRollingDice(roomData) {
     if (roomData.isRollingDice && !roomData.isMyTurn) {
       this.playDiceAnimation(roomData.diceResult);
+      this.clearTurnCountdown();
     }
   },
 
@@ -795,5 +798,6 @@ Page({
     wx.redirectTo({
       url: "/pages/index/index",
     });
+    this.clearWatcher();
   },
 });

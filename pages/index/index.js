@@ -1,6 +1,3 @@
-const defaultAvatarUrl =
-  "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0";
-
 const toastQueue = [];
 const toastDuration = 1000;
 
@@ -34,7 +31,7 @@ Page({
     isLogin: false,
     userInfo: {
       openId: "",
-      avatarUrl: defaultAvatarUrl,
+      avatarUrl: "",
       nickName: "",
     },
     roomId: "",
@@ -59,20 +56,17 @@ Page({
 
   onShow() {
     if (this.data.roomId) {
+      this.clearWatcher();
       this.watchRoom(this.data.roomId);
     }
   },
 
   onHide() {
-    if (this.watcher) {
-      this.watcher.close();
-    }
+    this.clearWatcher();
   },
 
   onUnload() {
-    if (this.watcher) {
-      this.watcher.close();
-    }
+    this.clearWatcher();
   },
 
   onShareAppMessage() {
@@ -89,6 +83,12 @@ Page({
       imageUrl: "https://s21.ax1x.com/2024/10/20/pAawfZd.webp",
       path: `/pages/index/index?roomId=${roomId}`,
     };
+  },
+
+  clearWatcher() {
+    if (this.watcher) {
+      this.watcher.close();
+    }
   },
 
   initialUserInfo() {
@@ -186,7 +186,7 @@ Page({
 
   startGame() {
     const { userInfo, roomId } = this.data;
-    if (userInfo.avatarUrl === defaultAvatarUrl) {
+    if (!userInfo.avatarUrl) {
       showToast("请先设置头像！");
     } else if (!userInfo.nickName) {
       showToast("请先设置昵称！");
@@ -366,8 +366,6 @@ Page({
     wx.navigateTo({
       url: `/pages/game/game?roomId=${roomId}`,
     });
-    if (this.watcher) {
-      this.watcher.close();
-    }
+    this.clearWatcher();
   },
 });

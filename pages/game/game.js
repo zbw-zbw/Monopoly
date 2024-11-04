@@ -32,10 +32,13 @@ const formatTime = (time) => {
   return time < 10 ? "0" + time : time.toString();
 };
 
+let canWatchRoom = false;
+
 Page({
   data: {
     roomId: null,
     userInfo: {},
+    isInited: false,
     players: [],
     myPlayerData: {},
     board: [],
@@ -112,22 +115,19 @@ Page({
   },
 
   onShow() {
-    if (this.data.roomId) {
-      this.clearWatcher();
-      this.watchRoomData(this.data.roomId);
-    }
+    // if (canWatchRoom && this.data.roomId) {
+    //   this.clearWatcher();
+    //   this.watchRoomData(this.data.roomId);
+    // }
   },
 
   onHide() {
-    this.clearWatcher();
+    // this.clearWatcher();
   },
 
   onUnload() {
     this.clearWatcher();
-
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer);
-    }
+    this.clearTurnCountdown();
   },
 
   clearWatcher() {
@@ -196,6 +196,7 @@ Page({
   },
 
   watchRoomData(roomId) {
+    canWatchRoom = true;
     const db = wx.cloud.database();
     this.watcher = db
       .collection("rooms")
@@ -231,6 +232,9 @@ Page({
       this.onChangeCurrentPlayerIndex(roomData);
       this.onOtherPlayerRollingDice(roomData);
       this.checkGameStatus(roomData);
+      this.setData({
+        isInited: true,
+      });
     } else {
       const {
         currentPlayerIndex,
@@ -248,7 +252,7 @@ Page({
         this.showOtherPlayerMessage(roomData);
       }
 
-      if (currentPlayerIndex !== lastCurrentPlayerIndex) {
+      if (roomData.isUpdateCurrentIndex) {
         this.onChangeCurrentPlayerIndex(roomData);
       }
 
@@ -268,15 +272,16 @@ Page({
   },
 
   rollDice() {
-    const { canRollDice } = this.data;
+    const { canRollDice, isMyTurn } = this.data;
     if (!canRollDice) {
-      showToast("别着急，还没轮到你呢！");
+      !isMyTurn && showToast("别着急，还没轮到你呢！");
       return;
     }
+    this.clearTurnCountdown();
     this.playDiceAnimation();
   },
 
-  playDiceAnimation(result) {
+  async playDiceAnimation(result) {
     this.setData({
       canRollDice: false,
       diceImg: "/assets/roll-dice.gif",
@@ -294,8 +299,9 @@ Page({
       } else {
         diceResult = Math.floor(Math.random() * 6) + 1;
       }
-      this.updateRoomData({
+      await this.updateRoomData({
         isRollingDice: true,
+        isUpdateCurrentIndex: false,
         diceResult,
         players: this.updatePlayers(myPlayerData),
       });
@@ -313,6 +319,7 @@ Page({
       // 通知后再移动 避免其他玩家接收到的位置有误
       await this.updateRoomData({
         isRollingDice: false,
+        isUpdateCurrentIndex: false,
       });
       this.movePlayer(diceResult, isMyTurn);
     }, 1000);
@@ -377,10 +384,10 @@ Page({
     }
   },
 
-  handleStartEvent(player, tile) {
+  async handleStartEvent(player, tile) {
     const price = this.checkdDoubleCardActive(player, tile.price);
     const message = `${player.name} 经过了起点，获得 ${price} 元补贴`;
-    this.updateRoomData({
+    await this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
       message,
@@ -407,8 +414,8 @@ Page({
       fail: (error) => {
         console.warn("购买失败:", error);
       },
-      complete: () => {
-        this.updateRoomData({
+      complete: async () => {
+        await this.updateRoomData({
           players: this.updatePlayers(player),
           isUpdateCurrentIndex: true,
           message,
@@ -417,7 +424,7 @@ Page({
     });
   },
 
-  handleChanceEvent(player, chanceEvents) {
+  async handleChanceEvent(player, chanceEvents) {
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
     let message = `${player.nickName} ${event.message}`;
     switch (event.type) {
@@ -440,14 +447,14 @@ Page({
         this.addItem(player, event.item);
         break;
     }
-    this.updateRoomData({
+    await this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
       message,
     });
   },
 
-  handleTrapEvent(player, trapEvents) {
+  async handleTrapEvent(player, trapEvents) {
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
     let message = `${player.nickName}${event.message}`;
     showToast(message);
@@ -467,14 +474,14 @@ Page({
         player.position = event.destination;
         break;
     }
-    this.updateRoomData({
+    await this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
       message,
     });
   },
 
-  handlePropertyEvent(player, tile) {
+  async handlePropertyEvent(player, tile) {
     const { players } = this.data;
     switch (true) {
       // 经过空地 可占领
@@ -496,8 +503,8 @@ Page({
               }
             }
           },
-          complete: () => {
-            this.updateRoomData({
+          complete: async () => {
+            await this.updateRoomData({
               players: this.updatePlayers(player),
               board: this.updateBoard(tile),
               isUpdateCurrentIndex: true,
@@ -527,8 +534,8 @@ Page({
               }
             }
           },
-          complete: () => {
-            this.updateRoomData({
+          complete: async () => {
+            await this.updateRoomData({
               players: this.updatePlayers(player),
               board: this.updateBoard(tile),
               isUpdateCurrentIndex: true,
@@ -547,7 +554,7 @@ Page({
           owner.money += toll;
           payMessage = `${player.nickName} 支付了 ${toll} 元过路费给 ${owner.nickName}`;
         }
-        this.updateRoomData({
+        await this.updateRoomData({
           players: this.updatePlayers(player),
           isUpdateCurrentIndex: true,
           message: payMessage,
@@ -584,7 +591,7 @@ Page({
     }
   },
 
-  useItem(e) {
+  async useItem(e) {
     const { item } = e.currentTarget.dataset;
     const { currentPlayerIndex, players } = this.data;
     const player = players[currentPlayerIndex];
@@ -608,8 +615,9 @@ Page({
       case "双倍卡":
         player.doubleCardActive = true;
         message = `${player.nickName} 使用了双倍卡！`;
-        this.updateRoomData({
+        await this.updateRoomData({
           players: this.updatePlayers(player),
+          isUpdateCurrentIndex: false,
           message,
         });
         decreaseItem();
@@ -617,13 +625,14 @@ Page({
       case "控制骰子":
         wx.showActionSheet({
           itemList: ["1", "2", "3", "4", "5", "6"],
-          success: (res) => {
+          success: async (res) => {
             const chosenNumber = parseInt(res.tapIndex) + 1;
             message = `${player.nickName} 使用了控制骰子！`;
             player.controlDiceValue = chosenNumber;
-            this.updateRoomData({
+            await this.updateRoomData({
               diceResult: chosenNumber,
               players: this.updatePlayers(player),
+              isUpdateCurrentIndex: false,
               message,
             });
             decreaseItem();
@@ -636,8 +645,9 @@ Page({
       case "防护罩":
         player.shieldActive = true;
         message = `${player.nickName} 使用了防护罩！`;
-        this.updateRoomData({
+        await this.updateRoomData({
           players: this.updatePlayers(player),
+          isUpdateCurrentIndex: false,
           message,
         });
         decreaseItem();
@@ -678,20 +688,14 @@ Page({
 
   // 回合轮换
   onChangeCurrentPlayerIndex(roomData) {
-    if (!roomData.isUpdateCurrentIndex) return;
-
     console.log("onChangeCurrentPlayerIndex, isMyTurn:", roomData.isMyTurn);
     if (roomData.isMyTurn) {
       showToast("嘿，现在轮到你了！");
-      this.setData({
-        canRollDice: true,
-        countdown: initCountdown,
-      });
-    } else {
-      this.setData({
-        countdown: initCountdown,
-      });
     }
+    this.setData({
+      canRollDice: roomData.isMyTurn,
+      countdown: initCountdown,
+    });
     const startTurnCountdownTimer = setTimeout(() => {
       clearTimeout(startTurnCountdownTimer);
       this.startTurnCountdown();
@@ -712,6 +716,7 @@ Page({
     }, 1000);
   },
 
+  // 清理回合倒计时
   clearTurnCountdown() {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
@@ -722,9 +727,9 @@ Page({
   },
 
   // 回合倒计时结束切换下一个玩家
-  endTurn() {
+  async endTurn() {
     const { currentPlayerIndex, players } = this.data;
-    this.updateRoomData({
+    await this.updateRoomData({
       isUpdateCurrentIndex: true,
       message: `${players[currentPlayerIndex].nickName} 超时了！`,
     });
@@ -733,6 +738,7 @@ Page({
   // 其他玩家正在摇骰子
   onOtherPlayerRollingDice(roomData) {
     if (roomData.isRollingDice && !roomData.isMyTurn) {
+      console.log("shouldClearCountdown");
       this.playDiceAnimation(roomData.diceResult);
       this.clearTurnCountdown();
     }

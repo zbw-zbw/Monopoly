@@ -13,7 +13,7 @@
 
 .player-info {
   flex: 1;
-  margin-right: 6px;
+  margin-right: 10px;
   padding: 6px;
   font-weight: bold;
   font-size: 10px;
@@ -22,6 +22,21 @@
 
 .player-info:last-child {
   margin-right: 0;
+}
+
+.player-info.active {
+  animation: scaleEffect 1s infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 0, 0.8), 0 0 12px rgba(255, 255, 0, 0.6);
+}
+
+@keyframes scaleEffect {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
 .player-user {

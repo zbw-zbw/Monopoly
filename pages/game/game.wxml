@@ -1,7 +1,7 @@
-<view class="page page-game">
+<view class="page page-game" wx:if="{{isInited}}">
 	<view class="players-info">
 		<block wx:for="{{players}}" wx:for-item="player" wx:key="index">
-			<view class="player-info" style="background-color: {{player.primaryColor}};">
+			<view class="player-info {{currentPlayerIndex === index ? 'active' : ''}}" style="background-color: {{player.primaryColor}};">
 				<view class="player-user">
 					<image class="player-avatar" src="{{player.avatarUrl}}" />
 					<view class="player-name-status">

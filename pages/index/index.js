@@ -26,6 +26,8 @@ const showNextToast = () => {
   });
 };
 
+let canWatchRoom = false;
+
 Page({
   data: {
     isLogin: false,
@@ -55,14 +57,15 @@ Page({
   },
 
   onShow() {
-    if (this.data.roomId) {
-      this.clearWatcher();
-      this.watchRoom(this.data.roomId);
-    }
+    // if (canWatchRoom && this.data.roomId) {
+    //   this.clearWatcher();
+    //   console.log("watch");
+    //   this.watchRoom(this.data.roomId);
+    // }
   },
 
   onHide() {
-    this.clearWatcher();
+    // this.clearWatcher();
   },
 
   onUnload() {
@@ -98,6 +101,8 @@ Page({
         isLogin: true,
         userInfo: JSON.parse(cacheUserInfo),
       });
+      const { roomId } = this.data;
+      roomId && this.joinRoom(roomId);
     } else {
       this.login();
     }
@@ -211,6 +216,7 @@ Page({
             title: "创建房间成功",
             icon: "none",
           });
+          this.showRoomModal();
           this.watchRoom(data.roomId);
           console.log("createRoom success:", res.result);
         } else {
@@ -242,6 +248,7 @@ Page({
             title: message || "加入房间成功",
             icon: "none",
           });
+          this.showRoomModal();
           this.watchRoom(roomId);
           console.log("joinRoom success:", res.result);
         } else {
@@ -263,6 +270,7 @@ Page({
   },
 
   watchRoom(roomId) {
+    canWatchRoom = true;
     const db = wx.cloud.database();
     this.watcher = db
       .collection("rooms")
@@ -284,8 +292,6 @@ Page({
 
             if (gameStatus === "IN_PROGRESS") {
               this.openGamePage(roomId);
-            } else {
-              this.showRoomModal();
             }
           }
         },

@@ -23,7 +23,7 @@ exports.main = async (event) => {
         return {
           success: true,
           message: "你已在房间内",
-          players: room.players,
+          room,
         };
       }
       // 检查房间是否已满
@@ -31,6 +31,7 @@ exports.main = async (event) => {
         return {
           success: false,
           message: "房间已满",
+          room,
         };
       }
       const updatedPlayers = [...room.players, user];
@@ -45,6 +46,7 @@ exports.main = async (event) => {
       return {
         success: true,
         message: "加入房间成功",
+        room,
       };
     } else {
       return {

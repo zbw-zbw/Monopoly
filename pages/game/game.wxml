@@ -14,6 +14,9 @@
 			</view>
 		</block>
 	</view>
+	<view class="round-info">
+		第<text class="round-number">{{currentRound}}</text>回合
+	</view>
 	<view class="game-board">
 		<view class="dice-countdown-container">
 			<text class="turn-countdown">回合时间: {{countdown}} 秒</text>
@@ -21,14 +24,16 @@
 				<view class="dice-img" style="background-image: url('{{diceImg}}');"></view>
 			</view>
 		</view>
-		<block wx:for="{{board}}" wx:key="index">
-			<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
-		</block>
-		<block wx:for="{{players}}" wx:key="index">
-			<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
-				<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
-			</view>
-		</block>
+		<view class="board-content">
+			<block wx:for="{{board}}" wx:key="index">
+				<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
+			</block>
+			<block wx:for="{{players}}" wx:key="index">
+				<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
+					<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
+				</view>
+			</block>
+		</view>
 	</view>
 	<button class="btn-reset-game" type="primary" size="mini" bindtap="giveUpGame">投降</button>
 	<view class="player-items-wrap">
@@ -38,6 +43,6 @@
 				<button class="use-item" type="primary" disabled="{{!canRollDice}}" bindtap="useItem" data-item="{{item}}" data-index="{{index}}">使用</button>
 			</view>
 		</view>
-		<text wx:else>暂无道具</text>
+		<text class="empty-items" wx:else>暂无道具</text>
 	</view>
 </view>

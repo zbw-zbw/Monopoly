@@ -30,17 +30,17 @@ const initBoard = () => {
         tile.bgColor = "#d0406f";
         tile.price = 1000;
         break;
-      case i % 6 === 0:
+      case i % 7 === 0:
         tile.name = "商店";
         tile.type = "shop";
         tile.bgColor = "#e07147";
         break;
-      case i % 7 === 0:
+      case i % 8 === 0:
         tile.name = "机会";
         tile.type = "chance";
         tile.bgColor = "#d854c1";
         break;
-      case i % 8 === 0:
+      case i % 9 === 0:
         tile.name = "陷阱";
         tile.type = "trap";
         tile.bgColor = "#64d45d";
@@ -87,6 +87,7 @@ exports.main = async (event) => {
       controlDiceValue: 0,
       skipNextTurn: false,
       isBankrupt: false,
+      roundsCompleted: false,
     }));
     await db
       .collection("rooms")
@@ -97,6 +98,7 @@ exports.main = async (event) => {
         data: {
           gameStatus: "IN_PROGRESS",
           players: initPlayers,
+          currentRound: 1,
           currentPlayerIndex: randomIndex,
           isUpdateCurrentIndex: true,
           board: initBoard(),

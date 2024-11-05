@@ -7,12 +7,7 @@
   margin-bottom: 40px;
   font-weight: bold;
   text-align: center;
-}
-
-.login-tips,
-.user-info-tips {
-  margin-bottom: 20px;
-  text-align: center;
+  color: #333;
 }
 
 .btn-login {
@@ -30,7 +25,7 @@
   padding: 0;
   font-size: 14px;
   border-radius: 50%;
-  border: 1px solid #aaa;
+  border: 3px solid #ffd400;
 }
 
 .login-user-info .avatar-wrapper::after {
@@ -41,11 +36,14 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .login-user-info .nickname {
   margin-top: 10px;
   text-align: center;
+  font-weight: bold;
+  color: #ffd400;
 }
 
 .room-modal {
@@ -77,12 +75,16 @@
   width: 90vw;
   height: 30vh;
   padding: 20px;
-  background: orange;
+  background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  overflow: hidden;
 }
 
 .room-modal .room-id {
+  font-size: 18px;
+  color: #e2821e;
   font-weight: bold;
 }
 
@@ -91,7 +93,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-around;
-  margin-top: 20px;
+  margin-top: 32px;
 }
 
 .players .player {
@@ -99,7 +101,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 10px;
+  margin-right: 15px;
 }
 
 .players .player:last-child {
@@ -108,24 +110,26 @@
 
 .players .player .avatar-wrap {
   position: relative;
-  width: 60px;
-  height: 60px;
-  margin-bottom: 5px;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 8px;
   border-radius: 50%;
-  border: 1px solid #ffd400;
+  border: 3px solid #ffd400;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .players .player .avatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .players .player .room-host {
   position: absolute;
-  top: -10px;
-  left: -6px;
-  transform: rotate(-10deg);
+  top: -4px;
+  left: -10px;
+  transform: rotate(-20deg);
   width: 24px;
   height: 24px;
   background: url("/assets/icon-room-host.png") center center / 100% 100%
@@ -138,9 +142,12 @@
 }
 
 .btn-enter-game {
-  padding: 10px 20px;
+  padding: 12px 20px;
   background-color: #e2821e;
   color: white;
   border: none;
   border-radius: 5px;
+  font-size: 16px;
+  margin-top: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }

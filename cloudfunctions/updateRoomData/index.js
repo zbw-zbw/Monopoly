@@ -44,8 +44,20 @@ exports.main = async (event) => {
     } = roomData;
     const data = { ...roomData };
     if (isUpdateCurrentIndex) {
+      // 更新当前玩家下标
       const nextPlayerIndex = getNextPlayerIndex(currentPlayerIndex, players);
       data.currentPlayerIndex = nextPlayerIndex;
+      // 更新当前回合数
+      data.players[currentPlayerIndex].roundsCompleted = true;
+      const allPlayersCompleted = data.players.every(
+        (player) => player.roundsCompleted
+      );
+      if (allPlayersCompleted) {
+        data.currentRound += 1;
+        data.players.forEach((player) => {
+          player.roundsCompleted = false;
+        });
+      }
     }
     const winner = checkGameOver(players);
     if (winner) {

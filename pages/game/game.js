@@ -1,5 +1,6 @@
 const toastQueue = [];
 const toastDuration = 1000;
+const nextToastDelay = 500;
 const moveDuration = 500;
 
 const showToast = (message) => {
@@ -21,7 +22,7 @@ const showNextToast = () => {
         clearTimeout(timer);
         toastQueue.shift();
         showNextToast();
-      }, toastDuration);
+      }, toastDuration + nextToastDelay);
     },
   });
 };
@@ -386,7 +387,7 @@ Page({
 
   async handleStartEvent(player, tile) {
     const price = this.checkdDoubleCardActive(player, tile.price);
-    const message = `${player.nickName} 经过了起点，获得${price}元补贴`;
+    const message = `${player.nickName}经过了起点，获得${price}元补贴`;
     await this.updateRoomData({
       players: this.updatePlayers(player),
       isUpdateCurrentIndex: true,
@@ -456,7 +457,7 @@ Page({
 
   async handleTrapEvent(player, trapEvents) {
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
-    let message = `${player.nickName} ${event.message}`;
+    let message = `${player.nickName}${event.message}`;
     showToast(message);
     switch (event.type) {
       case "penalty":
@@ -522,7 +523,7 @@ Page({
                 player.money -= upgradeCost;
                 if (tile.level < 5) {
                   tile.level += 1;
-                  upgradeMessage = `${player.nickName}成功将此领地升到 ${tile.level} 级！`;
+                  upgradeMessage = `${player.nickName}成功将此领地升到${tile.level}级！`;
                 } else {
                   showToast("已达到最高等级！");
                 }
@@ -749,7 +750,7 @@ Page({
     if (roomData.gameStatus === "GAME_OVER") {
       wx.showModal({
         title: "游戏结束",
-        content: `恭喜 ${roomData.winner.nickName}获得胜利！`,
+        content: `恭喜${roomData.winner.nickName}获得胜利！`,
         showCancel: false,
         success: () => {
           this.resetGame();
@@ -801,9 +802,10 @@ Page({
   },
 
   resetGame() {
+    this.clearRoomData();
+    this.clearWatcher();
     wx.redirectTo({
       url: "/pages/index/index",
     });
-    this.clearWatcher();
   },
 });

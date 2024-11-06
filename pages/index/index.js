@@ -2,12 +2,16 @@
 const MAX_PLAYER_COUNT = 4;
 
 // 提示信息
-const toastQueue = [];
-const TOAST_DURATION_MS_MS = 1000;
+let toastQueue = [];
+const MAX_TOAST_COUNT = 3;
+const TOAST_DURATION_MS = 1000;
 const SHOW_NEXT_TOAST_DELAY_MS = 500;
 
 // 展示当前提示信息
 const showToast = (message) => {
+  if (toastQueue.length >= MAX_TOAST_COUNT) {
+    toastQueue.shift();
+  }
   toastQueue.push(message);
   if (toastQueue.length === 1) {
     showNextToast();
@@ -30,6 +34,11 @@ const showNextToast = () => {
       }, TOAST_DURATION_MS + SHOW_NEXT_TOAST_DELAY_MS);
     },
   });
+};
+
+// 清空提示信息队列
+const clearToastQueue = () => {
+  toastQueue = [];
 };
 
 let canWatchRoom = false;
@@ -76,6 +85,7 @@ Page({
 
   onUnload() {
     this.clearWatcher();
+    clearToastQueue();
   },
 
   onShareAppMessage() {
@@ -315,9 +325,11 @@ Page({
   updatePlayerSlots(players) {
     const { playerSlots } = this.data;
     return playerSlots.map(
-      (_playerSlot, index) => players[index] || {
-        avatarUrl: "", nickName: ""
-      }
+      (_playerSlot, index) =>
+        players[index] || {
+          avatarUrl: "",
+          nickName: "",
+        }
     );
   },
 
@@ -362,6 +374,7 @@ Page({
   // 进入游戏页
   openGamePage(roomId) {
     this.clearWatcher();
+    clearToastQueue();
     wx.navigateTo({
       url: `/pages/game/game?roomId=${roomId}`,
     });

@@ -1,9 +1,10 @@
 // 提示信息
-const toastQueue = [];
+let toastQueue = [];
+const MAX_TOAST_COUNT = 3;
 const TOAST_DURATION_MS = 1000;
 const SHOW_NEXT_TOAST_DELAY_MS = 500;
 // 玩家回合倒计时更新间隔
-const START_TURN_COUNT_DOWN_MS= 1000;
+const START_TURN_COUNT_DOWN_MS = 1000;
 // 玩家移动一格的动画时间
 const PLAYER_MOVE_DURATION_MS = 500;
 // 一秒的毫秒数
@@ -11,6 +12,9 @@ const ONE_SECOND_MS = 1000;
 
 // 展示当前提示信息
 const showToast = (message) => {
+  if (toastQueue.length >= MAX_TOAST_COUNT) {
+    toastQueue.shift();
+  }
   toastQueue.push(message);
   if (toastQueue.length === 1) {
     showNextToast();
@@ -33,6 +37,11 @@ const showNextToast = () => {
       }, TOAST_DURATION_MS + SHOW_NEXT_TOAST_DELAY_MS);
     },
   });
+};
+
+// 清空提示信息队列
+const clearToastQueue = () => {
+  toastQueue = [];
 };
 
 // 格式化时间（不足两位补0）
@@ -144,6 +153,7 @@ Page({
   onUnload() {
     this.clearWatcher();
     this.clearTurnCountdown();
+    clearToastQueue();
   },
 
   clearWatcher() {
@@ -779,7 +789,7 @@ Page({
         content: `恭喜${roomData.winner.nickName}获得胜利！`,
         showCancel: false,
         success: () => {
-          this.resetGame();
+          this.clearRoomData();
         },
       });
     }
@@ -830,8 +840,8 @@ Page({
 
   // 重新开始游戏
   resetGame() {
-    this.clearRoomData();
     this.clearWatcher();
+    clearToastQueue();
     wx.redirectTo({
       url: "/pages/index/index",
     });

@@ -84,8 +84,8 @@ Page({
   },
 
   onUnload() {
-    this.clearWatcher();
     clearToastQueue();
+    this.clearWatcher();
   },
 
   onShareAppMessage() {
@@ -373,8 +373,8 @@ Page({
 
   // 进入游戏页
   openGamePage(roomId) {
-    this.clearWatcher();
     clearToastQueue();
+    this.clearWatcher();
     wx.navigateTo({
       url: `/pages/game/game?roomId=${roomId}`,
     });

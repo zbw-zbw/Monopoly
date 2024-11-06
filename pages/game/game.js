@@ -134,8 +134,8 @@ Page({
       this.initialData(roomId);
       this.initialRoomData(roomId);
     } else {
-      showToast("游戏异常，请稍后再试！");
-      this.resetGame();
+      showToast("游戏异常，请退出重试！");
+      // this.resetGame();
     }
   },
 
@@ -151,9 +151,9 @@ Page({
   },
 
   onUnload() {
+    clearToastQueue();
     this.clearWatcher();
     this.clearTurnCountdown();
-    clearToastQueue();
   },
 
   clearWatcher() {
@@ -840,9 +840,9 @@ Page({
 
   // 重新开始游戏
   resetGame() {
-    this.clearWatcher();
     clearToastQueue();
-    wx.redirectTo({
+    this.clearWatcher();
+    wx.navigateTo({
       url: "/pages/index/index",
     });
   },

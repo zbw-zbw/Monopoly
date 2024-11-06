@@ -388,6 +388,7 @@ Page({
     switch (tile.type) {
       case "start":
         this.handleStartEvent(player, tile);
+        break;
       case "shop":
         this.handleShopEvent(player);
         break;
@@ -407,7 +408,7 @@ Page({
 
   // 处理玩家经过起点事件
   async handleStartEvent(player, tile) {
-    const price = this.checkdDoubleCardActive(player, tile.price);
+    const price = this.checkDoubleCardActive(player, tile.price);
     const message = `${player.nickName}经过了起点，获得${price}元补贴`;
     await this.updateRoomData({
       players: this.updatePlayers(player),
@@ -453,7 +454,7 @@ Page({
     let message = `${player.nickName}${event.message}`;
     switch (event.type) {
       case "reward":
-        const price = this.checkdDoubleCardActive(player, event.amount);
+        const price = this.checkDoubleCardActive(player, event.amount);
         message = `${player.nickName}${event.message.replace(/(\d+)/g, price)}`;
         break;
       case "penalty":
@@ -684,7 +685,7 @@ Page({
   },
 
   // 是否使用了双倍卡
-  checkdDoubleCardActive(player, money) {
+  checkDoubleCardActive(player, money) {
     let configMoney = money;
     if (player.doubleCardActive) {
       configMoney = money * 2;

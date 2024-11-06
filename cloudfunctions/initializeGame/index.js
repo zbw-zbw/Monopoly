@@ -106,12 +106,12 @@ exports.main = async (event) => {
       });
     return {
       success: true,
-      message: "游戏初始化成功",
+      message: "游戏初始化成功！",
     };
   } catch (error) {
     return {
       success: false,
-      message: "游戏初始化失败",
+      message: "游戏初始化失败！",
       error,
     };
   }

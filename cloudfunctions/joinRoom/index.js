@@ -22,7 +22,7 @@ exports.main = async (event) => {
       if (isExist) {
         return {
           success: true,
-          message: "你已在房间内",
+          message: "你已在房间内！",
           room,
         };
       }
@@ -30,7 +30,7 @@ exports.main = async (event) => {
       if (room.players.length >= MAX_PLAYERS) {
         return {
           success: false,
-          message: "房间已满",
+          message: "房间已满！",
           room,
         };
       }
@@ -45,19 +45,19 @@ exports.main = async (event) => {
         });
       return {
         success: true,
-        message: "加入房间成功",
+        message: "加入房间成功！",
         room,
       };
     } else {
       return {
         success: false,
-        message: "房间不存在",
+        message: "房间不存在！",
       };
     }
   } catch (error) {
     return {
       success: false,
-      message: "加入房间失败",
+      message: "加入房间失败！",
     };
   }
 };

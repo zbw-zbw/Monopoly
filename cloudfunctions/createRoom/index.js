@@ -33,7 +33,7 @@ exports.main = async (event) => {
     if (existingRoom.data.length) {
       return {
         success: true,
-        message: "房间已存在",
+        message: "房间已存在！",
         data: {
           roomId,
         },
@@ -44,7 +44,7 @@ exports.main = async (event) => {
       });
       return {
         success: true,
-        message: "创建房间成功",
+        message: "创建房间成功！",
         data: {
           roomId,
         },
@@ -53,7 +53,7 @@ exports.main = async (event) => {
   } catch (error) {
     return {
       success: false,
-      message: "创建房间失败",
+      message: "创建房间失败！",
     };
   }
 };

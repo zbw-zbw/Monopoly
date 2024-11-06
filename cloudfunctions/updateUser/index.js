@@ -21,7 +21,7 @@ exports.main = async (event) => {
       });
       return {
         success: true,
-        message: "更新用户信息成功",
+        message: "更新用户信息成功！",
       };
     } else {
       await db.collection("users").add({
@@ -33,13 +33,13 @@ exports.main = async (event) => {
       });
       return {
         success: true,
-        message: "添加新用户成功",
+        message: "添加新用户成功！",
       };
     }
   } catch (error) {
     return {
       success: false,
-      message: "操作失败",
+      message: "操作失败！",
     };
   }
 };

@@ -74,13 +74,13 @@ exports.main = async (event) => {
       });
     return {
       success: true,
-      message: "更新房间数据成功",
+      message: "更新房间数据成功！",
     };
   } catch (error) {
     console.log("更新房间数据失败，error:", error);
     return {
       success: false,
-      message: "更新房间数据失败",
+      message: "更新房间数据失败！",
     };
   }
 };

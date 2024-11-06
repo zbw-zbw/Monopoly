@@ -1,8 +1,15 @@
+// 提示信息
 const toastQueue = [];
-const toastDuration = 1000;
-const nextToastDelay = 500;
-const moveDuration = 500;
+const TOAST_DURATION_MS = 1000;
+const SHOW_NEXT_TOAST_DELAY_MS = 500;
+// 玩家回合倒计时更新间隔
+const START_TURN_COUNT_DOWN_MS= 1000;
+// 玩家移动一格的动画时间
+const PLAYER_MOVE_DURATION_MS = 500;
+// 一秒的毫秒数
+const ONE_SECOND_MS = 1000;
 
+// 展示当前提示信息
 const showToast = (message) => {
   toastQueue.push(message);
   if (toastQueue.length === 1) {
@@ -10,27 +17,30 @@ const showToast = (message) => {
   }
 };
 
+// 展示下一个提示信息
 const showNextToast = () => {
   if (toastQueue.length === 0) return;
   const message = toastQueue[0];
   wx.showToast({
     title: message,
     icon: "none",
-    duration: toastDuration,
+    duration: TOAST_DURATION_MS,
     success: () => {
       const timer = setTimeout(() => {
         clearTimeout(timer);
         toastQueue.shift();
         showNextToast();
-      }, toastDuration + nextToastDelay);
+      }, TOAST_DURATION_MS + SHOW_NEXT_TOAST_DELAY_MS);
     },
   });
 };
 
+// 格式化时间（不足两位补0）
 const formatTime = (time) => {
   return time < 10 ? "0" + time : time.toString();
 };
 
+// 玩家回合时间（秒）
 const initCountdown = formatTime(15);
 
 let canWatchRoom = false;
@@ -142,6 +152,7 @@ Page({
     }
   },
 
+  // 初始化房间ID和用户数据
   initialData(roomId) {
     const userInfo = JSON.parse(wx.getStorageSync("userInfo"));
     this.setData({
@@ -150,6 +161,7 @@ Page({
     });
   },
 
+  // 初始化房间数据
   initialRoomData(roomId) {
     wx.cloud.callFunction({
       name: "getRoomData",
@@ -169,6 +181,7 @@ Page({
     });
   },
 
+  // 更新房间数据
   updateRoomData(data) {
     const { roomId, currentRound, currentPlayerIndex, players } = this.data;
     const roomData = {
@@ -202,6 +215,7 @@ Page({
     });
   },
 
+  // 实时监听房间数据变化
   watchRoomData(roomId) {
     canWatchRoom = true;
     const db = wx.cloud.database();
@@ -224,6 +238,7 @@ Page({
       });
   },
 
+  // 处理房间数据更新
   handleRoomDataUpdate(roomData) {
     const { userInfo } = this.data;
     const { players, currentPlayerIndex, message } = roomData;
@@ -255,29 +270,30 @@ Page({
         isRollingDice: lastIsRollingDice,
         message: lastMessage,
       } = this.lastRoomData;
+      // 判断是否有其他玩家的提示信息需要显示
       if (message !== lastMessage) {
         this.showOtherPlayerMessage(roomData);
       }
-
+      // 判断当前玩家索引是否发生变化
       if (roomData.isUpdateCurrentIndex) {
         this.onChangeCurrentPlayerIndex(roomData);
       }
-
+      // 判断其他玩家是否正在摇骰子（如果是则播放摇骰子动画）
       if (isRollingDice !== lastIsRollingDice && isRollingDice) {
         this.onOtherPlayerRollingDice(roomData);
       }
-
+      // 判断游戏状态是否发生变化
       if (gameStatus !== lastGameStatus) {
         this.checkGameStatus(roomData);
       }
     }
-
     this.lastRoomData = roomData;
     this.setData({
       ...roomData,
     });
   },
 
+  // 摇骰子
   rollDice() {
     const { canRollDice, isMyTurn } = this.data;
     if (!canRollDice) {
@@ -288,6 +304,7 @@ Page({
     this.playDiceAnimation();
   },
 
+  // 播放摇骰子动画
   async playDiceAnimation(result) {
     this.setData({
       canRollDice: false,
@@ -330,6 +347,7 @@ Page({
     }, 1000);
   },
 
+  // 移动玩家
   movePlayer(diceResult, isMyTurn) {
     const { currentPlayerIndex, players, board } = this.data;
     const player = players[currentPlayerIndex];
@@ -338,6 +356,7 @@ Page({
     this.animatePlayerMovement(startPosition, targetPosition, isMyTurn);
   },
 
+  // 玩家移动动画
   animatePlayerMovement(start, target, isMyTurn) {
     const { players, board, currentPlayerIndex } = this.data;
     const player = players[currentPlayerIndex];
@@ -348,8 +367,8 @@ Page({
     const nextPosition = (start + 1) % board.length;
     player.position = nextPosition;
     const animation = wx.createAnimation({
-      duration: moveDuration,
-      timingFunction: "ease",
+      duration: PLAYER_MOVE_DURATION_MS,
+      timingFunction: "ONE_SECOND_MS",
     });
     animation
       .left(board[nextPosition].x + "px")
@@ -360,9 +379,10 @@ Page({
     });
     setTimeout(() => {
       this.animatePlayerMovement(nextPosition, target, isMyTurn);
-    }, moveDuration);
+    }, PLAYER_MOVE_DURATION_MS);
   },
 
+  // 处理玩家到达的格子事件
   handleTileEvent(player, tile) {
     const { chanceEvents, trapEvents } = this.data;
     switch (tile.type) {
@@ -385,6 +405,7 @@ Page({
     }
   },
 
+  // 处理玩家经过起点事件
   async handleStartEvent(player, tile) {
     const price = this.checkdDoubleCardActive(player, tile.price);
     const message = `${player.nickName}经过了起点，获得${price}元补贴`;
@@ -395,6 +416,7 @@ Page({
     });
   },
 
+  // 处理玩家经过商品事件
   handleShopEvent(player) {
     const { items } = this.data;
     const itemList = items.map(({ name, price }) => `购买${name}（${price}元)`);
@@ -425,6 +447,7 @@ Page({
     });
   },
 
+  // 处理玩家经过机会事件
   async handleChanceEvent(player, chanceEvents) {
     const event = chanceEvents[Math.floor(Math.random() * chanceEvents.length)];
     let message = `${player.nickName}${event.message}`;
@@ -455,6 +478,7 @@ Page({
     });
   },
 
+  // 处理玩家经过陷阱事件
   async handleTrapEvent(player, trapEvents) {
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
     let message = `${player.nickName}${event.message}`;
@@ -479,6 +503,7 @@ Page({
     });
   },
 
+  // 处理玩家经过领地事件
   async handlePropertyEvent(player, tile) {
     const { players } = this.data;
     switch (true) {
@@ -561,6 +586,7 @@ Page({
     }
   },
 
+  // 更新地图数据
   updateBoard(newTile) {
     const { board } = this.data;
     let newBoard = { ...board };
@@ -568,6 +594,7 @@ Page({
     return newBoard;
   },
 
+  // 更新玩家数据
   updatePlayers(newPlayer) {
     const { players } = this.data;
     let newPlayers = { ...players };
@@ -577,6 +604,7 @@ Page({
     return newPlayers;
   },
 
+  // 增加道具
   addItem(player, name) {
     const itemData = player.items.find((item) => item.name === name);
     if (itemData) {
@@ -589,6 +617,7 @@ Page({
     }
   },
 
+  // 消耗道具
   decreaseItem(player, index) {
     if (player.items[index].count > 1) {
       player.items[index].count -= 1;
@@ -597,6 +626,7 @@ Page({
     }
   },
 
+  // 使用道具
   async useItem(e) {
     const { item } = e.currentTarget.dataset;
     const { currentPlayerIndex, players } = this.data;
@@ -636,10 +666,6 @@ Page({
             });
           },
           fail: (error) => {
-            wx.showToast({
-              title: "使用失败",
-              icon: "none",
-            });
             console.error("useItem error:", error);
           },
         });
@@ -681,14 +707,13 @@ Page({
     return "";
   },
 
-  // 同步其他玩家触发的提示信息
+  // 展示其他玩家提示信息
   showOtherPlayerMessage(roomData) {
-    if (roomData.message) {
-      showToast(roomData.message);
-    }
+    if (!roomData.message) return;
+    showToast(roomData.message);
   },
 
-  // 回合轮换
+  // 回合切换
   onChangeCurrentPlayerIndex(roomData) {
     console.log("onChangeCurrentPlayerIndex, isMyTurn:", roomData.isMyTurn);
     if (roomData.isMyTurn) {
@@ -701,10 +726,10 @@ Page({
     const startTurnCountdownTimer = setTimeout(() => {
       clearTimeout(startTurnCountdownTimer);
       this.startTurnCountdown();
-    }, toastDuration);
+    }, START_TURN_COUNT_DOWN_MS);
   },
 
-  // 开始玩家回合倒计时
+  // 开始当前玩家回合倒计时
   startTurnCountdown() {
     this.clearTurnCountdown();
     this.countdownTimer = setInterval(() => {
@@ -715,10 +740,10 @@ Page({
         clearInterval(this.countdownTimer);
         this.endTurn();
       }
-    }, 1000);
+    }, ONE_SECOND_MS);
   },
 
-  // 清理回合倒计时
+  // 清理当前玩家回合倒计时
   clearTurnCountdown() {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
@@ -737,7 +762,7 @@ Page({
     });
   },
 
-  // 其他玩家正在摇骰子
+  // 其他玩家正在摇骰子 播放摇骰子动画
   onOtherPlayerRollingDice(roomData) {
     if (roomData.isRollingDice && !roomData.isMyTurn) {
       this.playDiceAnimation(roomData.diceResult);
@@ -745,7 +770,7 @@ Page({
     }
   },
 
-  // 游戏结束
+  // 检查游戏状态
   checkGameStatus(roomData) {
     if (roomData.gameStatus === "GAME_OVER") {
       wx.showModal({
@@ -759,7 +784,7 @@ Page({
     }
   },
 
-  // 投降
+  // 玩家发起投降
   giveUpGame() {
     const { host, userInfo } = this.data;
     if (host.openId !== userInfo.openId) {
@@ -778,6 +803,7 @@ Page({
     });
   },
 
+  // 清理房间数据（解散房间）
   clearRoomData() {
     const { roomId } = this.data;
     wx.cloud.callFunction({
@@ -801,6 +827,7 @@ Page({
     });
   },
 
+  // 重新开始游戏
   resetGame() {
     this.clearRoomData();
     this.clearWatcher();

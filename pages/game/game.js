@@ -56,8 +56,8 @@ const formatTime = (time) => {
   return time < 10 ? "0" + time : time.toString();
 };
 
-// 玩家回合时间（秒）
-const initCountdown = formatTime(1500);
+// FIXME 玩家回合时间（秒）
+const initCountdown = formatTime(15);
 
 let canWatchRoom = false;
 

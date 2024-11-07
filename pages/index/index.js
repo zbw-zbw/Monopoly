@@ -301,6 +301,8 @@ Page({
 
   // 实时监听房间信息变化
   watchRoom(roomId) {
+    if (this.watcher) return;
+
     canWatchRoom = true;
     const db = wx.cloud.database();
     this.watcher = db

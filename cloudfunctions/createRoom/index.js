@@ -8,9 +8,12 @@ function generateRoomId() {
 
 exports.main = async (event) => {
   const { user } = event;
+
   // FIXME: 内测房间 ID
   const roomId = "内测玩家专属房间";
+
   // const roomId = generateRoomId();
+
   const roomData = {
     roomId,
     host: user,
@@ -22,6 +25,7 @@ exports.main = async (event) => {
     ],
     gameStatus: "NOT_START",
   };
+
   // 检查房间是否已存在
   try {
     const existingRoom = await db
@@ -30,6 +34,7 @@ exports.main = async (event) => {
         roomId,
       })
       .get();
+
     if (existingRoom.data.length) {
       return {
         success: true,
@@ -42,6 +47,7 @@ exports.main = async (event) => {
       await db.collection("rooms").add({
         data: roomData,
       });
+
       return {
         success: true,
         message: "创建房间成功！",

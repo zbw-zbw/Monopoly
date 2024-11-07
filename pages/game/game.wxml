@@ -1,12 +1,12 @@
 <view class="page page-game" wx:if="{{isInited}}">
 	<view class="players-info">
 		<block wx:for="{{players}}" wx:for-item="player" wx:key="index">
-			<view class="player-info {{currentPlayerIndex === index ? 'active' : ''}}" style="background-color: {{player.primaryColor}};">
+			<view class="player-info {{currentPlayerIndex === index ? 'active' : ''}} {{player.skipNextTurn ? 'paused' : ''}} {{player.isBankrupt ? 'bankrupt' : ''}}" style="background-color: {{player.primaryColor}};">
 				<view class="player-user">
 					<image class="player-avatar" src="{{player.avatarUrl}}" />
 					<view class="player-name-status">
 						<view class="player-name">{{player.nickName}}</view>
-						<view class="player-status">{{player.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : ''}}</view>
+						<view class="player-status">{{player.isBankrupt ? '已破产' : currentPlayerIndex === index ? '进行中' : (player.skipNextTurn ? '暂停行动': '')}}</view>
 					</view>
 				</view>
 				<view class="player-money">资产：{{player.money}}元</view>

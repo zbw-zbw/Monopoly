@@ -4,6 +4,7 @@ const db = cloud.database();
 
 exports.main = async (event) => {
   const { roomId } = event;
+
   try {
     await db
       .collection("rooms")
@@ -11,6 +12,7 @@ exports.main = async (event) => {
         roomId,
       })
       .remove();
+
     return {
       success: true,
     };

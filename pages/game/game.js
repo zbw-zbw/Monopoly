@@ -57,7 +57,7 @@ const formatTime = (time) => {
 };
 
 // 玩家回合时间（秒）
-const initCountdown = formatTime(15);
+const initCountdown = formatTime(1500);
 
 let canWatchRoom = false;
 
@@ -142,7 +142,7 @@ Page({
       this.initialData(roomId);
       this.initialRoomData(roomId);
     } else {
-      showToast("游戏异常，请退出重试！");
+      showToast("游戏异常，请退出重进！");
       // this.resetGame();
     }
   },
@@ -202,11 +202,18 @@ Page({
 
   // 更新房间数据
   updateRoomData(data) {
-    const { roomId, currentRound, currentPlayerIndex, players } = this.data;
+    const {
+      roomId,
+      currentRound,
+      currentPlayerIndex,
+      players,
+      board,
+    } = this.data;
 
     const roomData = {
       currentPlayerIndex,
       players: data.players || players,
+      board: data.board || board,
       currentRound,
       ...data,
     };
@@ -237,6 +244,8 @@ Page({
 
   // 实时监听房间数据变化
   watchRoomData(roomId) {
+    if (this.watcher) return;
+
     canWatchRoom = true;
     const db = wx.cloud.database();
     this.watcher = db
@@ -284,11 +293,9 @@ Page({
         isInited: true,
       });
     } else {
-      const { currentPlayerIndex, gameStatus, isRollingDice, message } =
-        roomData;
+      const { gameStatus, isRollingDice, message } = roomData;
 
       const {
-        currentPlayerIndex: lastCurrentPlayerIndex,
         gameStatus: lastGameStatus,
         isRollingDice: lastIsRollingDice,
         message: lastMessage,
@@ -511,7 +518,9 @@ Page({
 
     switch (event.type) {
       case "reward":
-        const price = this.checkDoubleCardActive(player, event.amount);
+        const rewardAmount =
+          Math.ceil(Math.random() * event.amount) + event.amount;
+        const price = this.checkDoubleCardActive(player, rewardAmount);
         message = `${player.nickName}${event.message.replace(/(\d+)/g, price)}`;
 
         break;
@@ -521,7 +530,9 @@ Page({
         if (shieldActiveMessage) {
           message = shieldActiveMessage;
         } else {
-          player.money -= event.amount;
+          const penaltyAmount =
+            Math.ceil(Math.random() * event.amount) + event.amount;
+          player.money -= penaltyAmount;
         }
 
         break;
@@ -549,7 +560,6 @@ Page({
     const event = trapEvents[Math.floor(Math.random() * trapEvents.length)];
 
     let message = `${player.nickName}${event.message}`;
-    showToast(message);
 
     switch (event.type) {
       case "penalty":
@@ -558,7 +568,9 @@ Page({
         if (shieldActiveMessage) {
           message = shieldActiveMessage;
         } else {
-          player.money -= event.amount;
+          const penaltyAmount =
+            Math.ceil(Math.random() * event.amount) + event.amount;
+          player.money -= penaltyAmount;
         }
 
         break;
@@ -612,6 +624,7 @@ Page({
         });
 
         break;
+
       // 经过自家领地 可升级
       case tile.owner === player.openId:
         const upgradeCost = tile.level * tile.price;
@@ -644,6 +657,7 @@ Page({
         });
 
         break;
+
       // 经过别家领地 需过路费
       case tile.owner !== player.openId:
         const toll = tile.price * tile.level;
@@ -931,9 +945,9 @@ Page({
       success: (res) => {
         if (res.result.success) {
           this.resetGame();
-          showToast("投降成功，房间已解散！");
+          showToast("房间已解散！");
         } else {
-          showToast("投降失败！");
+          showToast("房间异常，请退出重进！");
           console.error("clearRoomData error:", res.result);
         }
       },

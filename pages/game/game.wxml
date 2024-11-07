@@ -29,7 +29,7 @@
 				<view class="tile" style="left: {{item.x}}px; top: {{item.y}}px; background-color: {{item.bgColor}};">{{item.name}} {{item.level > 0 ? item.level + '级' : ''}}</view>
 			</block>
 			<block wx:for="{{players}}" wx:key="index">
-				<view class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
+				<view wx:if="{{!item.isBankrupt}}" class="player-marker" style="z-index: {{index === currentPlayerIndex ? 99 : players.length - index}}; left: {{board[item.position].x}}px; top: {{board[item.position].y}}px;" animation="{{playerAnimation}}">
 					<image class="marker-avatar" style="border: 1px solid {{item.primaryColor}}" src="{{item.avatarUrl}}" alt="" />
 				</view>
 			</block>

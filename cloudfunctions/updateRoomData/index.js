@@ -70,6 +70,16 @@ exports.main = async (event) => {
     const data = { ...roomData };
 
     if (isUpdateCurrentIndex) {
+      // 当前回合结束，清空双倍卡效果
+      if (data.players[currentPlayerIndex].doubleCardActive) {
+        data.players[currentPlayerIndex].doubleCardActive = false;
+      }
+
+      // 当前回合结束，清空防护罩效果
+      if (data.players[currentPlayerIndex].shieldActive) {
+        data.players[currentPlayerIndex].shieldActive = false;
+      }
+
       // 更新当前玩家下标
       const nextPlayerIndex = getNextPlayerIndex(currentPlayerIndex, players);
       data.currentPlayerIndex = nextPlayerIndex;

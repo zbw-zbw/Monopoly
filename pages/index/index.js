@@ -408,7 +408,7 @@ Page({
   openGamePage(roomId) {
     clearToastQueue();
     this.clearWatcher();
-    wx.navigateTo({
+    wx.reLaunch({
       url: `/pages/game/game?roomId=${roomId}`,
     });
   },

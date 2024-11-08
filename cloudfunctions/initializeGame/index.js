@@ -10,8 +10,30 @@ const initBoard = () => {
   const board = [];
   const totalTiles = 40;
   const gridSize = 30;
+  const shopCount = 2;
+  const trapCount = 3;
+  const chanceCount = 3;
+  const cornerIndices = [0, 10, 20, 30]; // 四个角落的位置
 
-  for (let i = 0; i < totalTiles; i++) {
+  // 先生成起点格子
+  const startTile = {
+    id: 0,
+    x: 0,
+    y: 0,
+    type: "start",
+    name: "起点",
+    bgColor: "#d0406f",
+    price: Math.ceil(Math.random() * 600 + 900),
+    owner: null,
+    level: 0,
+  };
+  board.push(startTile); // 将起点格子固定在第一个位置
+
+  // 生成普通属性格子（跳过角落）
+  for (let i = 1; i < totalTiles - 1; i++) {
+    // 不包含最后一个格子
+    if (cornerIndices.includes(i)) continue; // 跳过角落格子
+
     let tile = {
       id: i,
       x: 0,
@@ -19,46 +41,12 @@ const initBoard = () => {
       type: "property",
       name: "",
       bgColor: "#ffffff",
-      price: 0,
+      price: Math.ceil(Math.random() * 300 + 500),
       owner: null,
       level: 0,
     };
 
-    const tilePrice = Math.ceil(Math.random() * 150 + 100);
-    const startPrice = Math.ceil(Math.random() * 500 + 500);
-
-    switch (true) {
-      case i === 0:
-        tile.name = "起点";
-        tile.type = "start";
-        tile.bgColor = "#d0406f";
-        tile.price = startPrice;
-
-        break;
-      case i % 7 === 0:
-        tile.name = "商店";
-        tile.type = "shop";
-        tile.bgColor = "#e07147";
-
-        break;
-      case i % 8 === 0:
-        tile.name = "机会";
-        tile.type = "chance";
-        tile.bgColor = "#d854c1";
-
-        break;
-      case i % 9 === 0:
-        tile.name = "陷阱";
-        tile.type = "trap";
-        tile.bgColor = "#64d45d";
-
-        break;
-      default:
-        tile.price = tilePrice;
-
-        break;
-    }
-
+    // 设置格子的坐标
     if (i < 10) {
       tile.x = i * gridSize;
       tile.y = 0;
@@ -73,13 +61,30 @@ const initBoard = () => {
       tile.y = (9 - (i - 30)) * gridSize;
     }
 
-    // 避免在拐角位置渲染重复的格子
-    if (i > 0 && ((i % 10 === 0 && i < 40) || (i % 10 === 9 && i >= 30))) {
-      continue;
-    }
-
     board.push(tile);
   }
+
+  // 随机分配特殊格子，确保不覆盖起点
+  const assignSpecialTiles = (type, count, name, bgColor) => {
+    let assigned = 0;
+    while (assigned < count) {
+      const randomIndex = Math.floor(Math.random() * board.length);
+      const tile = board[randomIndex];
+      // 只分配到普通属性格子上
+      if (tile.type === "property") {
+        tile.type = type;
+        tile.name = name;
+        tile.bgColor = bgColor;
+        tile.price = 0; // 特殊格子无价格
+        assigned++;
+      }
+    }
+  };
+
+  // 分配商店、陷阱和机会格子
+  assignSpecialTiles("shop", shopCount, "商店", "#e07147");
+  assignSpecialTiles("trap", trapCount, "陷阱", "#64d45d");
+  assignSpecialTiles("chance", chanceCount, "机会", "#d854c1");
 
   return board;
 };

@@ -57,7 +57,7 @@ const formatTime = (time) => {
 };
 
 // FIXME 玩家回合时间（秒）
-const initCountdown = formatTime(15);
+const initCountdown = formatTime(1500);
 
 let canWatchRoom = false;
 
@@ -571,6 +571,10 @@ Page({
           const penaltyAmount =
             Math.ceil(Math.random() * event.amount) + event.amount;
           player.money -= penaltyAmount;
+          message = `${player.nickName}${event.message.replace(
+            /(\d+)/g,
+            penaltyAmount
+          )}`;
         }
 
         break;
@@ -598,7 +602,7 @@ Page({
       case !tile.owner && !tile.level:
         let buyMessage = "";
         wx.showModal({
-          content: `你要占领此空地吗？费用：${tile.price}元！`,
+          content: `你确定要占领此地吗？需花费：${tile.price}元！`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= tile.price) {
@@ -607,7 +611,7 @@ Page({
                 tile.bgColor = player.primaryColor;
                 tile.level = 1;
                 player.ownedPropertiesCount += 1;
-                buyMessage = `${player.nickName}占领了此空地！`;
+                buyMessage = `${player.nickName}花费${tile.price}元占领了此地！`;
               } else {
                 showToast("兄弟，你的钱不够！");
               }
@@ -630,16 +634,16 @@ Page({
         const upgradeCost = tile.level * tile.price;
         let upgradeMessage = "";
         wx.showModal({
-          content: `你要升级此领地吗？费用: ${upgradeCost}元！`,
+          content: `你确定要升级此地吗？需花费: ${upgradeCost}元！`,
           success: ({ confirm }) => {
             if (confirm) {
               if (player.money >= upgradeCost) {
                 player.money -= upgradeCost;
                 if (tile.level < 5) {
                   tile.level += 1;
-                  upgradeMessage = `${player.nickName}成功将此领地升到${tile.level}级！`;
+                  upgradeMessage = `${player.nickName}花费${upgradeCost}元将此地升到${tile.level}级！`;
                 } else {
-                  showToast("已达到最高等级！");
+                  showToast("此地已达到最高等级！");
                 }
               } else {
                 showToast("兄弟，你的钱不够！");
@@ -924,7 +928,7 @@ Page({
 
     wx.showModal({
       title: "投降输一半",
-      content: `确定要投降吗？将会解散该房间！`,
+      content: `你确定要投降吗？将会解散该房间！`,
       success: ({ confirm }) => {
         if (confirm) {
           this.clearRoomData();
@@ -945,7 +949,6 @@ Page({
       success: (res) => {
         if (res.result.success) {
           this.resetGame();
-          showToast("房间已解散！");
         } else {
           showToast("房间异常，请退出重进！");
           console.error("clearRoomData error:", res.result);

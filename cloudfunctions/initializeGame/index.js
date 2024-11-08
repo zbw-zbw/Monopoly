@@ -23,7 +23,7 @@ const initBoard = () => {
     type: "start",
     name: "起点",
     bgColor: "#d0406f",
-    price: Math.ceil(Math.random() * 600 + 900),
+    price: Math.ceil(Math.random() * 2000 + 3000),
     owner: null,
     level: 0,
   };

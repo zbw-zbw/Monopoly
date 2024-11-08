@@ -41,7 +41,7 @@ const initBoard = () => {
       type: "property",
       name: "",
       bgColor: "#ffffff",
-      price: Math.ceil(Math.random() * 300 + 500),
+      price: Math.ceil(Math.random() * 200 + 400),
       owner: null,
       level: 0,
     };

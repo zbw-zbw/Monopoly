@@ -121,11 +121,11 @@ Page({
     items: [
       {
         name: "双倍卡",
-        price: 1000,
+        price: 500,
       },
       {
         name: "防护罩",
-        price: 1500,
+        price: 1000,
       },
       {
         name: "控制骰子",
@@ -479,7 +479,7 @@ Page({
   handleShopEvent(player) {
     const { items } = this.data;
 
-    const itemList = items.map(({ name, price }) => `购买${name}（${price}元)`);
+    const itemList = items.map(({ name, price }) => `购买${name}（${price}元）`);
 
     let message = "";
     wx.showActionSheet({
@@ -815,8 +815,6 @@ Page({
     if (player.doubleCardActive) {
       configMoney = money * 2;
       player.doubleCardActive = false;
-
-      return message;
     }
 
     player.money += configMoney;

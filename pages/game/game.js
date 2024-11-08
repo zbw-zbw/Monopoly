@@ -82,11 +82,11 @@ Page({
         amount: 500,
         message: `中了彩票，获得500元！`,
       },
-      {
-        type: "penalty",
-        amount: 500,
-        message: `随地扔垃圾，罚款500元！`,
-      },
+      // {
+      //   type: "penalty",
+      //   amount: 500,
+      //   message: `随地扔垃圾，罚款500元！`,
+      // },
       {
         type: "item",
         item: "双倍卡",
@@ -102,10 +102,10 @@ Page({
         item: "防护罩",
         message: "运气爆棚，捡到了防护罩！",
       },
-      {
-        type: "skip",
-        message: "掉进了陷阱，跳过下一轮行动！",
-      },
+      // {
+      //   type: "skip",
+      //   message: "掉进了陷阱，跳过下一轮行动！",
+      // },
     ],
     trapEvents: [
       {
@@ -121,15 +121,15 @@ Page({
     items: [
       {
         name: "双倍卡",
-        price: 300,
+        price: 1000,
       },
       {
         name: "防护罩",
-        price: 400,
+        price: 1500,
       },
       {
         name: "控制骰子",
-        price: 500,
+        price: 2000,
       },
     ],
     countdown: initCountdown,
@@ -524,30 +524,30 @@ Page({
         message = `${player.nickName}${event.message.replace(/(\d+)/g, price)}`;
 
         break;
-      case "penalty":
-        const shieldActiveMessage = this.checkShieldActive(player);
+      // case "penalty":
+      //   const shieldActiveMessage = this.checkShieldActive(player);
 
-        if (shieldActiveMessage) {
-          message = shieldActiveMessage;
-        } else {
-          const penaltyAmount =
-            Math.ceil(Math.random() * event.amount) + event.amount;
-          player.money -= penaltyAmount;
-          message = `${player.nickName}${event.message.replace(
-            /(\d+)/g,
-            penaltyAmount
-          )}`;
-        }
+      //   if (shieldActiveMessage) {
+      //     message = shieldActiveMessage;
+      //   } else {
+      //     const penaltyAmount =
+      //       Math.ceil(Math.random() * event.amount) + event.amount;
+      //     player.money -= penaltyAmount;
+      //     message = `${player.nickName}${event.message.replace(
+      //       /(\d+)/g,
+      //       penaltyAmount
+      //     )}`;
+      //   }
 
-        break;
+      //   break;
       case "item":
         this.addItem(player, event.item);
 
         break;
-      case "skip":
-        player.skipNextTurn = true;
+      // case "skip":
+      //   player.skipNextTurn = true;
 
-        break;
+      //   break;
       default:
         break;
     }

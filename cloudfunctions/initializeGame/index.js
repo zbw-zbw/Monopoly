@@ -11,8 +11,8 @@ const initBoard = () => {
   const totalTiles = 40;
   const gridSize = 30;
   const shopCount = 2;
-  const trapCount = 3;
-  const chanceCount = 3;
+  const trapCount = 4;
+  const chanceCount = 4;
   const cornerIndices = [0, 10, 20, 30]; // 四个角落的位置
 
   // 先生成起点格子
@@ -23,7 +23,7 @@ const initBoard = () => {
     type: "start",
     name: "起点",
     bgColor: "#d0406f",
-    price: Math.ceil(Math.random() * 2000 + 3000),
+    price: Math.ceil(Math.random() * 3000 + 2000),
     owner: null,
     level: 0,
   };

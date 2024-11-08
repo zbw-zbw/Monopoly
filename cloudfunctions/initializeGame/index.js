@@ -2,7 +2,7 @@ const cloud = require("wx-server-sdk");
 cloud.init();
 const db = cloud.database();
 
-const playerInitMoney = 5000;
+const playerInitMoney = 10000;
 
 const primaryColor = ["tomato", "skyblue", "orange", "yellowgreen"];
 

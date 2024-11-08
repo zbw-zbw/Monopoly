@@ -533,6 +533,10 @@ Page({
           const penaltyAmount =
             Math.ceil(Math.random() * event.amount) + event.amount;
           player.money -= penaltyAmount;
+          message = `${player.nickName}${event.message.replace(
+            /(\d+)/g,
+            penaltyAmount
+          )}`;
         }
 
         break;

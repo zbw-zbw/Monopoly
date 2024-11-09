@@ -57,7 +57,7 @@ const formatTime = (time) => {
 };
 
 // FIXME 玩家回合时间（秒）
-const initCountdown = formatTime(15);
+const initCountdown = formatTime(30);
 
 let canWatchRoom = false;
 
@@ -82,11 +82,11 @@ Page({
         amount: 500,
         message: `中了彩票，获得500元！`,
       },
-      // {
-      //   type: "penalty",
-      //   amount: 500,
-      //   message: `随地扔垃圾，罚款500元！`,
-      // },
+      {
+        type: "penalty",
+        amount: 500,
+        message: `随地扔垃圾，罚款500元！`,
+      },
       {
         type: "item",
         item: "双倍卡",
@@ -102,10 +102,10 @@ Page({
         item: "防护罩",
         message: "运气爆棚，捡到了防护罩！",
       },
-      // {
-      //   type: "skip",
-      //   message: "掉进了陷阱，跳过下一轮行动！",
-      // },
+      {
+        type: "skip",
+        message: "掉进了陷阱，跳过下一轮行动！",
+      },
     ],
     trapEvents: [
       {
@@ -466,7 +466,8 @@ Page({
 
   // 处理玩家经过起点事件
   async handleStartEvent(player, tile) {
-    const price = this.checkDoubleCardActive(player, tile.price);
+    const amount = tile.price + Math.ceil(Math.random() * 4000);
+    const price = this.checkDoubleCardActive(player, amount);
     const message = `${player.nickName}经过了起点，获得${price}元补贴`;
     await this.updateRoomData({
       players: this.updatePlayers(player),
@@ -479,7 +480,9 @@ Page({
   handleShopEvent(player) {
     const { items } = this.data;
 
-    const itemList = items.map(({ name, price }) => `购买${name}（${price}元）`);
+    const itemList = items.map(
+      ({ name, price }) => `购买${name}（${price}元）`
+    );
 
     let message = "";
     wx.showActionSheet({
@@ -524,30 +527,30 @@ Page({
         message = `${player.nickName}${event.message.replace(/(\d+)/g, price)}`;
 
         break;
-      // case "penalty":
-      //   const shieldActiveMessage = this.checkShieldActive(player);
+      case "penalty":
+        const shieldActiveMessage = this.checkShieldActive(player);
 
-      //   if (shieldActiveMessage) {
-      //     message = shieldActiveMessage;
-      //   } else {
-      //     const penaltyAmount =
-      //       Math.ceil(Math.random() * event.amount) + event.amount;
-      //     player.money -= penaltyAmount;
-      //     message = `${player.nickName}${event.message.replace(
-      //       /(\d+)/g,
-      //       penaltyAmount
-      //     )}`;
-      //   }
+        if (shieldActiveMessage) {
+          message = shieldActiveMessage;
+        } else {
+          const penaltyAmount =
+            Math.ceil(Math.random() * event.amount) + event.amount;
+          player.money -= penaltyAmount;
+          message = `${player.nickName}${event.message.replace(
+            /(\d+)/g,
+            penaltyAmount
+          )}`;
+        }
 
-      //   break;
+        break;
       case "item":
         this.addItem(player, event.item);
 
         break;
-      // case "skip":
-      //   player.skipNextTurn = true;
+      case "skip":
+        player.skipNextTurn = true;
 
-      //   break;
+        break;
       default:
         break;
     }
@@ -666,16 +669,18 @@ Page({
 
         break;
 
-      // 经过别家领地 需过路费
+      // 经过别家领地 需支付过路费
       case tile.owner !== player.openId:
-        const toll = tile.price * tile.level;
-        let payMessage = this.checkShieldActive(player);
+        const toll = tile.price * tile.level * 0.5;
+
+        const owner = players.find((p) => p.openId === tile.owner);
+
+        let payMessage =
+          this.checkShieldActive(player) ||
+          this.checkOwnerSkipNextTurn(player, owner);
 
         if (!payMessage) {
           player.money -= toll;
-
-          const owner = players.find((p) => p.openId === tile.owner);
-
           owner.money += toll;
           payMessage = `${player.nickName}支付了${toll}元过路费给${owner.nickName}`;
         }
@@ -827,6 +832,17 @@ Page({
     if (player.shieldActive) {
       player.shieldActive = false;
       const message = `防护罩已生效，${player.nickName}免受罚款！`;
+
+      return message;
+    }
+
+    return "";
+  },
+
+  // 地主是否处于陷阱中
+  checkOwnerSkipNextTurn(player, owner) {
+    if (owner.skipNextTurn) {
+      const message = `${owner.nickName}处于“暂停行动”状态，${player.nickName}免受罚款！`;
 
       return message;
     }

@@ -671,13 +671,13 @@ Page({
 
       // 经过别家领地 需支付过路费
       case tile.owner !== player.openId:
-        const toll = tile.price * tile.level * 0.5;
+        const toll = Math.ceil(tile.price * tile.level * 0.5);
 
         const owner = players.find((p) => p.openId === tile.owner);
 
         let payMessage =
-          this.checkShieldActive(player) ||
-          this.checkOwnerSkipNextTurn(player, owner);
+          this.checkOwnerSkipNextTurn(player, owner) ||
+          this.checkShieldActive(player);
 
         if (!payMessage) {
           player.money -= toll;
@@ -842,7 +842,7 @@ Page({
   // 地主是否处于陷阱中
   checkOwnerSkipNextTurn(player, owner) {
     if (owner.skipNextTurn) {
-      const message = `${owner.nickName}处于“暂停行动”状态，${player.nickName}免受罚款！`;
+      const message = `${owner.nickName}处于暂停行动状态，${player.nickName}免受罚款！`;
 
       return message;
     }

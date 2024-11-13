@@ -36,7 +36,6 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .login-user-info .nickname {
@@ -114,15 +113,14 @@
   height: 70px;
   margin-bottom: 8px;
   border-radius: 50%;
-  border: 3px solid #ffd400;
+  border: 2px solid #ffd400;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .players .player .avatar {
-  width: 100%;
-  height: 100%;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .players .player .room-host {

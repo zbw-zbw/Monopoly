@@ -20,7 +20,7 @@
   <modal class="room-modal" wx:if="{{isModalVisible}}">
     <view class="modal-mask" bindtap="closeRoomModal"></view>
     <view class="modal-content">
-      <text class="room-id">房间 ID： {{roomId}}</text>
+      <text class="room-id">房间名称： {{roomId}}</text>
       <view class="players">
         <view class="player" wx:for="{{playerSlots}}" wx:key="index">
           <view class="avatar-wrap">

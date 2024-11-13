@@ -76,6 +76,7 @@ Page({
     diceImg: "/assets/dice-1.png",
     diceResult: 0,
     gameStatus: "IN_PROGRESS",
+    hasUsedItemThisTurn: false,
     chanceEvents: [
       {
         type: "reward",
@@ -441,23 +442,20 @@ Page({
     switch (tile.type) {
       case "start":
         this.handleStartEvent(player, tile);
-
         break;
       case "shop":
         this.handleShopEvent(player);
-
         break;
       case "chance":
         this.handleChanceEvent(player, chanceEvents);
-
         break;
       case "trap":
         this.handleTrapEvent(player, trapEvents);
-
-        break;
       case "property":
         this.handlePropertyEvent(player, tile);
-
+        break;
+      case "bank":
+        this.handleBankEvent(player);
         break;
       default:
         break;
@@ -638,7 +636,7 @@ Page({
 
       // 经过自家领地 可升级
       case tile.owner === player.openId:
-        const upgradeCost = tile.level * tile.price;
+        const upgradeCost = Math.ceil(tile.level * tile.price * 0.5);
         let upgradeMessage = "";
         wx.showModal({
           content: `你确定要升级此地吗？需花费: ${upgradeCost}元！`,
@@ -697,6 +695,22 @@ Page({
     }
   },
 
+  // 处理玩家经过银行事件
+  async handleBankEvent(player) {
+    const minAmount = 1000;
+    const maxAmount = 5000;
+    const rewardAmount =
+      Math.floor(Math.random() * (maxAmount - minAmount + 1)) + minAmount;
+    player.money += rewardAmount;
+    const message = `${player.nickName}经过了银行，获得了${rewardAmount}元奖励`;
+
+    await this.updateRoomData({
+      players: this.updatePlayers(player),
+      isUpdateCurrentIndex: true,
+      message,
+    });
+  },
+
   // 更新地图数据
   updateBoard(newTile) {
     const { board } = this.data;
@@ -748,9 +762,16 @@ Page({
   async useItem(e) {
     const { item } = e.currentTarget.dataset;
 
-    const { currentPlayerIndex, players } = this.data;
+    const { currentPlayerIndex, players, hasUsedItemThisTurn } = this.data;
 
     const player = players[currentPlayerIndex];
+
+    // 检查当前回合是否已经使用过道具
+    if (hasUsedItemThisTurn) {
+      showToast("当前回合已经使用过道具！");
+
+      return;
+    }
 
     const itemIndex = player.items.findIndex((data) => data.name === item.name);
 
@@ -773,6 +794,10 @@ Page({
           message,
         });
 
+        this.setData({
+          hasUsedItemThisTurn: true,
+        });
+
         break;
       case "控制骰子":
         wx.showActionSheet({
@@ -788,6 +813,10 @@ Page({
               players: this.updatePlayers(player),
               isUpdateCurrentIndex: false,
               message,
+            });
+
+            this.setData({
+              hasUsedItemThisTurn: true,
             });
           },
           fail: (error) => {
@@ -805,6 +834,10 @@ Page({
           players: this.updatePlayers(player),
           isUpdateCurrentIndex: false,
           message,
+        });
+
+        this.setData({
+          hasUsedItemThisTurn: true,
         });
 
         break;
@@ -863,6 +896,11 @@ Page({
 
     if (roomData.isMyTurn) {
       showToast("嘿，现在轮到你了！");
+
+      // 重置道具使用状态
+      this.setData({
+        hasUsedItemThisTurn: false,
+      });
     }
 
     this.setData({

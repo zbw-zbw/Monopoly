@@ -13,6 +13,7 @@ const initBoard = () => {
   const shopCount = 2;
   const trapCount = 4;
   const chanceCount = 4;
+  const bankCount = 2;
   const cornerIndices = [0, 10, 20, 30]; // 四个角落的位置
 
   // 先生成起点格子
@@ -41,7 +42,7 @@ const initBoard = () => {
       type: "property",
       name: "",
       bgColor: "#ffffff",
-      price: Math.ceil(Math.random() * 1200 + 800),
+      price: Math.ceil(Math.random() * 2000 + 1000),
       owner: null,
       level: 0,
     };
@@ -85,6 +86,7 @@ const initBoard = () => {
   assignSpecialTiles("shop", shopCount, "商店", "#e07147");
   assignSpecialTiles("trap", trapCount, "陷阱", "#64d45d");
   assignSpecialTiles("chance", chanceCount, "机会", "#d854c1");
+  assignSpecialTiles("bank", bankCount, "银行", "#1a1aa6");
 
   return board;
 };

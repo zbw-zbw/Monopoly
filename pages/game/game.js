@@ -126,11 +126,11 @@ Page({
       },
       {
         name: "防护罩",
-        price: 1000,
+        price: 800,
       },
       {
         name: "控制骰子",
-        price: 2000,
+        price: 1500,
       },
     ],
     countdown: initCountdown,
@@ -451,6 +451,7 @@ Page({
         break;
       case "trap":
         this.handleTrapEvent(player, trapEvents);
+        break;
       case "property":
         this.handlePropertyEvent(player, tile);
         break;
@@ -702,7 +703,7 @@ Page({
     const rewardAmount =
       Math.floor(Math.random() * (maxAmount - minAmount + 1)) + minAmount;
     player.money += rewardAmount;
-    const message = `${player.nickName}经过了银行，获得了${rewardAmount}元奖励`;
+    const message = `${player.nickName}经过了银行，获得${rewardAmount}元奖励`;
 
     await this.updateRoomData({
       players: this.updatePlayers(player),

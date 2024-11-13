@@ -86,7 +86,7 @@ const initBoard = () => {
   assignSpecialTiles("shop", shopCount, "商店", "#e07147");
   assignSpecialTiles("trap", trapCount, "陷阱", "#64d45d");
   assignSpecialTiles("chance", chanceCount, "机会", "#d854c1");
-  assignSpecialTiles("bank", bankCount, "银行", "#1a1aa6");
+  assignSpecialTiles("bank", bankCount, "银行", "#4c4cce");
 
   return board;
 };
